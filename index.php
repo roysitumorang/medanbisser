@@ -24,7 +24,7 @@ require 'Utilities.php';
 require 'Routes.php';
 define('ROUTES', igbinary_unserialize($redis->get('routes')));
 require 'Role_Permissions.php';
-define('ROLE_PERMISSIONS', apcu_fetch('role_permissions')[ROLE]);
+define('ROLE_PERMISSIONS', igbinary_unserialize($redis->get('role_permissions'))[ROLE]);
 $route = null;
 foreach (['request_method', 'request_time', 'request_time_float', 'redirect_url'] as $item) {
 	$k = strtoupper($item);
@@ -71,5 +71,5 @@ foreach ($menus as $item) {
 	$main_menu .= '<li' . ($item['active'] ? ' class="active"' : '') . '><a href="' . Utilities::link_to($item['url']) . '"><i class="fa fa-' . $item['icon'] . '">&nbsp;</i>&nbsp;' . $item['title'] . '</a></li>';
 }
 foreach (['error_messages', 'alert'] as $k) { if (isset($_SESSION[$k])) unset($_SESSION[$k]); }
-!apcu_exists('template') && apcu_add('template', file_get_contents('template.html'));
-echo sprintf(apcu_fetch('template'), $main_menu, $login_menu, $content, $javascript ? sprintf('<script>%s</script>', $javascript) : '');
+!$redis->exists('template') && $redis->set('template', file_get_contents('template.html'));
+echo sprintf($redis->get('template'), $main_menu, $login_menu, $content, $javascript ? sprintf('<script>%s</script>', $javascript) : '');

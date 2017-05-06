@@ -1,6 +1,6 @@
 <?php
 
-if (!apcu_exists('role_permissions')) {
+if (!$redis->exists('role_permissions')) {
 	$role_permissions = [
 		'Anonymous' => [
 			'Home' => ['index', 'search'],
@@ -44,5 +44,5 @@ if (!apcu_exists('role_permissions')) {
 			'Meetups' => ['index', 'new', 'create']
 		]
 	];
-	apcu_add('role_permissions', $role_permissions);
+	$redis->set('role_permissions', igbinary_serialize($role_permissions));
 }
