@@ -15,7 +15,7 @@ $redis->pconnect('127.0.0.1');
 require 'Session.php';
 new Session($db);
 session_start();
-define('LOCALES', ['id' => 'Bahasa Indonesia', 'en' => 'English']);
+define('LOCALES', ['id_ID' => 'Bahasa Indonesia', 'en_US' => 'English']);
 $locales = array_keys(LOCALES);
 $locale = &$_SESSION['locale'];
 !in_array($locale, $locales) && $locale = $locales[0];
@@ -31,7 +31,7 @@ foreach (['request_method', 'request_time', 'request_time_float', 'redirect_url'
 	$$item = $_SERVER[$k];
 }
 foreach (ROUTES as $item) {
-	if ($request_method == $item['request_method'] && preg_match($item['url'], $redirect_url, $param)) {
+	if ($request_method === $item['request_method'] && preg_match($item['url'], $redirect_url, $param)) {
 		$route = [
 			'controller' => $item['controller'],
 			'method' => $item['method'],
@@ -42,9 +42,10 @@ foreach (ROUTES as $item) {
 }
 $route || Utilities::redirect_to(404);
 in_array($route['param']['locale'], $locales) && $locale <> $route['param']['locale'] && $locale = $route['param']['locale'];
-putenv("LANG=$locale");
-setlocale(LC_ALL, $locale);
+putenv("LANGUAGE=$locale");
+setlocale(LC_ALL, $locale . '.utf8');
 bindtextdomain($locale, dirname(__FILE__) . '/locales');
+bind_textdomain_codeset($domain, 'UTF-8');
 textdomain($locale);
 in_array($route['method'], ROLE_PERMISSIONS[$route['controller']]) || Utilities::redirect_to(403);
 $file = "modules/{$route['controller']}.php";

@@ -152,7 +152,7 @@ if (!$redis->exists('routes')) {
 		'method' => 'show']
 	];
 	foreach ($routes as &$route) {
-		$route['url'] = '/^\/(?P<locale>en|id)\/' . $route['url'] . '(\/)?$/';
+		$route['url'] = '/^\/(?P<locale>en_US|id_ID)\/' . $route['url'] . '(\/)?$/';
 	}
 	$redis->set('routes', igbinary_serialize($routes));
 }
