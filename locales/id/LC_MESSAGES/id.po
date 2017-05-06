@@ -1,0 +1,629 @@
+# Copyright (C) 2016 Medan Bisser
+# This file is distributed under the same license as the Medan Bisser package.
+# Roy Situmorang <roy.situmorang@gmail.com>, 2016.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Medan Bisser 1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2016-01-10 20:41+0700\n"
+"PO-Revision-Date: 2016-01-10 21:10+0700\n"
+"Language-Team: Roy Situmorang <roy.situmorang@gmail.com>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Poedit 1.8.6\n"
+"X-Poedit-SourceCharset: UTF-8\n"
+"X-Poedit-Basepath: .\n"
+"Last-Translator: Roy Situmorang <roy.situmorang@gmail.com>\n"
+"Language: id\n"
+"X-Poedit-SearchPath-0: Application.php\n"
+"X-Poedit-SearchPath-1: index.php\n"
+"X-Poedit-SearchPath-2: Menus.php\n"
+"X-Poedit-SearchPath-3: Role_Permissions.php\n"
+"X-Poedit-SearchPath-4: Routes.php\n"
+"X-Poedit-SearchPath-5: Session.php\n"
+"X-Poedit-SearchPath-6: Utilities.php\n"
+"X-Poedit-SearchPath-7: modules\n"
+
+#: Application.php:76
+msgid "Sort by"
+msgstr "Urutan berdasarkan"
+
+#: Application.php:82
+msgid "Size per page"
+msgstr "Ukuran per halaman"
+
+#: Application.php:89
+#, php-format
+msgid "Total %d of %d items , Page"
+msgstr "Total %d dari %d data , Halaman"
+
+#: Application.php:93
+#, php-format
+msgid "of %d pages"
+msgstr "dari %d halaman"
+
+#: Application.php:112
+msgid "About Us"
+msgstr "Tentang Kami"
+
+#: Application.php:114
+msgid "Welcome"
+msgstr "Selamat datang"
+
+#: Application.php:114
+msgid "About Me"
+msgstr "Tentang Saya"
+
+#: Application.php:114
+msgid "Logout"
+msgstr "Keluar"
+
+#: Application.php:116 modules/Sessions.php:36 modules/Sessions.php:52
+msgid "Login"
+msgstr "Masuk"
+
+#: Menus.php:5 Menus.php:8 Menus.php:16 Menus.php:24 Menus.php:32
+msgid "Home"
+msgstr "Halaman Depan"
+
+#: Menus.php:9 Menus.php:17 Menus.php:25 Menus.php:33 modules/Users.php:21
+#: modules/Users.php:213
+msgid "User"
+msgid_plural "Users"
+msgstr[0] "Anggota"
+
+#: Menus.php:10 Menus.php:18 Menus.php:26 Menus.php:34
+#: modules/Monthly_Cashes.php:25 modules/Monthly_Cashes.php:143
+msgid "Monthly Cash"
+msgid_plural "Monthly Cashes"
+msgstr[0] "Uang Kas"
+
+#: Menus.php:11 Menus.php:19 Menus.php:27 Menus.php:35 modules/Expenses.php:20
+#: modules/Expenses.php:111
+msgid "Expense"
+msgid_plural "Expenses"
+msgstr[0] "Pengeluaran"
+
+#: Menus.php:12 Menus.php:20 Menus.php:28 Menus.php:36 modules/Meetups.php:24
+#: modules/Meetups.php:127
+msgid "Meetup"
+msgid_plural "Meetups"
+msgstr[0] "Kopdar"
+
+#: Menus.php:13 Menus.php:21 Menus.php:29 Menus.php:37 modules/Posts.php:21
+#: modules/Posts.php:130
+msgid "Post"
+msgid_plural "Posts"
+msgstr[0] "Berita"
+
+#: modules/Expenses.php:21 modules/Expenses.php:22 modules/Expenses.php:23
+#: modules/Home.php:144 modules/Meetups.php:25 modules/Meetups.php:26
+#: modules/Meetups.php:27 modules/Monthly_Cashes.php:26
+#: modules/Monthly_Cashes.php:27 modules/Monthly_Cashes.php:28
+#: modules/Posts.php:22 modules/Posts.php:23 modules/Posts.php:24
+#: modules/Users.php:24
+msgid "Search"
+msgstr "Cari"
+
+#: modules/Expenses.php:25 modules/Monthly_Cashes.php:29 modules/Posts.php:25
+#: modules/Users.php:25
+msgid "New"
+msgstr "Tambah"
+
+#: modules/Expenses.php:34 modules/Expenses.php:118 modules/Posts.php:32
+#: modules/Sessions.php:125 modules/Sessions.php:132
+msgid "Date"
+msgstr "Tanggal"
+
+#: modules/Expenses.php:35 modules/Expenses.php:157 modules/Expenses.php:160
+msgid "Description"
+msgstr "Keterangan"
+
+#: modules/Expenses.php:36 modules/Expenses.php:148 modules/Expenses.php:151
+msgid "Amount"
+msgstr "Jumlah"
+
+#: modules/Expenses.php:50 modules/Meetups.php:29 modules/Posts.php:77
+#: modules/Users.php:141
+msgid "Edit"
+msgstr ""
+
+#: modules/Expenses.php:77
+msgid "Expense created successfully"
+msgstr "Pengeluaran berhasil ditambah"
+
+#: modules/Expenses.php:98 modules/Expenses.php:188 modules/Posts.php:103
+#: modules/Posts.php:119 modules/Posts.php:177 modules/Users.php:189
+#: modules/Users.php:502
+msgid "Record invalid"
+msgstr "Data tidak valid"
+
+#: modules/Expenses.php:105
+msgid "Expense updated successfully"
+msgstr "Pengeluaran berhasil diupdate"
+
+#: modules/Expenses.php:165 modules/Meetups.php:173
+#: modules/Monthly_Cashes.php:203 modules/Sessions.php:179
+msgid "Save"
+msgstr "Simpan"
+
+#: modules/Expenses.php:166 modules/Meetups.php:174
+#: modules/Monthly_Cashes.php:204
+msgid "Reset"
+msgstr "Ulangi"
+
+#: modules/Expenses.php:167 modules/Meetups.php:175
+#: modules/Monthly_Cashes.php:205 modules/Posts.php:78 modules/Posts.php:165
+#: modules/Users.php:142 modules/Users.php:401
+msgid "Back"
+msgstr "Kembali"
+
+#: modules/Expenses.php:175 modules/Expenses.php:183 modules/Expenses.php:187
+#: modules/Posts.php:174 modules/Sessions.php:189 modules/Sessions.php:194
+#: modules/Sessions.php:200 modules/Users.php:408 modules/Users.php:422
+#: modules/Users.php:428 modules/Users.php:435 modules/Users.php:444
+#: modules/Users.php:450 modules/Users.php:456 modules/Users.php:462
+#: modules/Users.php:468 modules/Users.php:474 modules/Users.php:482
+#: modules/Users.php:490 modules/Users.php:498
+msgid "is blank"
+msgstr "masih kosong"
+
+#: modules/Expenses.php:185 modules/Users.php:410 modules/Users.php:414
+#: modules/Users.php:418 modules/Users.php:424 modules/Users.php:430
+#: modules/Users.php:439 modules/Users.php:452 modules/Users.php:458
+#: modules/Users.php:464 modules/Users.php:470 modules/Users.php:476
+#: modules/Users.php:484 modules/Users.php:492
+msgid "is invalid"
+msgstr "tidak valid"
+
+#: modules/Home.php:14 modules/Sessions.php:76 modules/Users.php:91
+#: modules/Users.php:241 modules/Users.php:242
+msgid "Alias"
+msgstr "Panggilan"
+
+#: modules/Home.php:15 modules/Sessions.php:80 modules/Users.php:95
+#: modules/Users.php:247 modules/Users.php:250 modules/Users.php:251
+msgid "Place of Birth"
+msgstr "Tempat Lahir"
+
+#: modules/Home.php:16 modules/Sessions.php:80 modules/Users.php:95
+#: modules/Users.php:247 modules/Users.php:276
+msgid "Date of Birth"
+msgstr "Tanggal Lahir"
+
+#: modules/Home.php:17 modules/Sessions.php:88 modules/Users.php:103
+#: modules/Users.php:281 modules/Users.php:284
+msgid "KTP"
+msgstr ""
+
+#: modules/Home.php:17 modules/Sessions.php:88 modules/Users.php:103
+#: modules/Users.php:281 modules/Users.php:284
+msgid "SIM"
+msgstr ""
+
+#: modules/Home.php:17 modules/Sessions.php:88 modules/Users.php:103
+#: modules/Users.php:281 modules/Users.php:284
+msgid "NISN"
+msgstr ""
+
+#: modules/Home.php:18 modules/Sessions.php:92 modules/Users.php:107
+#: modules/Users.php:290 modules/Users.php:293
+msgid "Occupation"
+msgstr "Pekerjaan"
+
+#: modules/Home.php:19 modules/Sessions.php:96 modules/Users.php:111
+#: modules/Users.php:299 modules/Users.php:302 modules/Users.php:303
+msgid "Address"
+msgstr "Alamat"
+
+#: modules/Home.php:20 modules/Users.php:306 modules/Users.php:307
+msgid "City"
+msgstr "Kota"
+
+#: modules/Home.php:21 modules/Users.php:310 modules/Users.php:311
+msgid "Province"
+msgstr "Propinsi"
+
+#: modules/Home.php:22 modules/Sessions.php:100 modules/Users.php:115
+#: modules/Users.php:316 modules/Users.php:319 modules/Users.php:320
+msgid "Email"
+msgstr ""
+
+#: modules/Home.php:23 modules/Sessions.php:104 modules/Users.php:119
+#: modules/Users.php:316 modules/Users.php:323 modules/Users.php:324
+msgid "Mobile Phone"
+msgstr "Telepon / HP"
+
+#: modules/Home.php:24 modules/Users.php:123 modules/Users.php:327
+#: modules/Users.php:328
+msgid "Forbiscom User ID"
+msgstr "User ID di Forbiscom"
+
+#: modules/Home.php:25 modules/Home.php:128 modules/Users.php:333
+msgid "Photo"
+msgstr "Foto"
+
+#: modules/Home.php:30
+#, php-format
+msgid "Welcome %s"
+msgstr "Selamat datang %s"
+
+#: modules/Home.php:33
+#, php-format
+msgid "Cash of %s"
+msgstr "Uang kas bulan %s"
+
+#: modules/Home.php:36
+msgid "Total Income"
+msgstr "Total Iuran"
+
+#: modules/Home.php:41
+msgid "Total Expense"
+msgstr "Total Pengeluaran"
+
+#: modules/Home.php:46
+msgid "Total Income minus Total Expense"
+msgstr "Total Iuran dikurangi Total Pengeluaran"
+
+#: modules/Home.php:55
+#, php-format
+msgid ""
+"Currently you still use standard password. For security purpose, please "
+"click %shere%s to change it"
+msgstr ""
+"Anda masih menggunakan password standar. Demi keamanan, silahkan klik %sdi "
+"sini%s untuk mengganti."
+
+#: modules/Home.php:61
+#, php-format
+msgid "Your cash of %s status"
+msgstr "Status uang kas Anda untuk bulan %s"
+
+#: modules/Home.php:64 modules/Monthly_Cashes.php:42
+#: modules/Monthly_Cashes.php:154 modules/Monthly_Cashes.php:156
+#: modules/Users.php:55 modules/Users.php:132
+msgid "Paid"
+msgstr "Lunas"
+
+#: modules/Home.php:64 modules/Monthly_Cashes.php:156 modules/Users.php:55
+#: modules/Users.php:132
+msgid "up to"
+msgstr "sampai bulan"
+
+#: modules/Home.php:65
+#, php-format
+msgid "Debt %d Months"
+msgstr "Utang %d Bulan"
+
+#: modules/Home.php:66
+#, php-format
+msgid "You are getting a warning letter due to %d months late payment"
+msgstr ""
+"Anda mendapatkan surat peringatan karena telat membayar uang iuran %d bulan."
+
+#: modules/Home.php:76
+msgid ""
+"The following fields are still missing, please submit the datas to The "
+"Administrators to get the ID card"
+msgstr ""
+"Data berikut belum lengkap, silahkan lengkapi kepada Pengurus sebagai syarat "
+"mendapatkan kartu anggota"
+
+#: modules/Home.php:94
+msgid ""
+"Please fill the search form above with 3 digits of ID number printed on ID "
+"card"
+msgstr "Silahkan isi 3 angka Nomor Anggota yang tertera di kartu anggota."
+
+#: modules/Home.php:99
+#, php-format
+msgid "Medan Bisser member with ID %s is not found"
+msgstr "Medan Bisser tidak memiliki anggota dengan Nomor Anggota %s"
+
+#: modules/Home.php:104
+#, php-format
+msgid "Medan Bisser member with ID %s is found, the detail is as follow"
+msgstr ""
+"Medan Bisser memiliki anggota dengan Nomor Anggota %s, dengan data sebagai "
+"berikut"
+
+#: modules/Home.php:108 modules/Home.php:129 modules/Meetups.php:39
+#: modules/Meetups.php:135 modules/Monthly_Cashes.php:39
+#: modules/Monthly_Cashes.php:151 modules/Sessions.php:76 modules/Users.php:33
+#: modules/Users.php:91 modules/Users.php:226
+msgid "Name"
+msgstr "Nama"
+
+#: modules/Home.php:113
+msgid "Membership Status"
+msgstr "Status Keanggotaan"
+
+#: modules/Home.php:115
+#, php-format
+msgid ""
+"Resign as of %s. All of his activities are completely out of Medan Bisser's "
+"responsibility"
+msgstr ""
+"Keluar per bulan %s. Semua kegiatan yang bersangkutan sepenuhnya di luar "
+"tanggung jawab Medan Bisser"
+
+#: modules/Home.php:115
+msgid "is active"
+msgstr "masih aktif"
+
+#: modules/Home.php:118
+msgid ""
+"If you have complaint regarding our activities, please don't hesitate to let "
+"us know by sending email to info@medanbisser.com, thank you"
+msgstr ""
+"Jika Anda memiliki keluhan berkaitan dengan kegiatan Kami, silahkan "
+"sampaikan melalui email ke info@medanbisser.com, terima kasih"
+
+#: modules/Home.php:123
+msgid "Welcome to"
+msgstr "Selamat datang di"
+
+#: modules/Home.php:125
+msgid ""
+"For your information, official member of Medan Bisser has an ID card and "
+"should show it before doing activities"
+msgstr ""
+"Perlu kami beritahukan, anggota resmi Medan Bisser dilengkapi kartu anggota "
+"yang harus ditunjukan sebelum melakukan liputan"
+
+#: modules/Home.php:126
+msgid "The ID card shows the following information"
+msgstr "Di kartu anggota tertera informasi berikut"
+
+#: modules/Home.php:130
+msgid "ID which consists of 3 digits in red colour"
+msgstr "Nomor anggota terdiri dari 3 angka berwarna merah"
+
+#: modules/Home.php:132
+msgid ""
+"To verify the ID card, please fill the search form below with the ID number "
+"printed on the ID card then click Search button"
+msgstr ""
+"Untuk mengecek keabsahan kartu anggota, silahkan masukkan nomor anggota yang "
+"tertera di kartu anggota ke kolom pencarian di bawah lalu klik tombol Cari"
+
+#: modules/Home.php:133
+msgid "The valid ID card conforms all of the following conditions"
+msgstr "Kartu anggota yang dianggap sah dan berlaku apabila"
+
+#: modules/Home.php:135
+msgid ""
+"Photo printed on the ID card and the one displayed on the search result are "
+"identical"
+msgstr ""
+"Foto yang tertera di kartu anggota sama dengan foto yang tertera di hasil "
+"pencarian"
+
+#: modules/Home.php:136
+#, php-format
+msgid "Membership status displayed on the search result %sis active%s"
+msgstr "Status Keanggotaan yang tertera di hasil pencarian %smasih aktif%s"
+
+#: modules/Home.php:141
+msgid "ID number"
+msgstr "Nomor anggota"
+
+#: modules/Home.php:142
+msgid "ID Number"
+msgstr "Nomor Anggota"
+
+#: modules/Meetups.php:38 modules/Meetups.php:134 modules/Monthly_Cashes.php:38
+#: modules/Monthly_Cashes.php:150 modules/Sessions.php:72 modules/Users.php:32
+#: modules/Users.php:87
+msgid "ID"
+msgstr "Nomor Anggota"
+
+#: modules/Monthly_Cashes.php:43 modules/Monthly_Cashes.php:155
+#: modules/Users.php:55 modules/Users.php:132
+#, php-format
+msgid "Debt"
+msgstr "Utang"
+
+#: modules/Monthly_Cashes.php:70 modules/Monthly_Cashes.php:184
+#: modules/Users.php:55 modules/Users.php:132
+#, php-format
+msgid "%d Month"
+msgid_plural "%d Months"
+msgstr[0] "%d Bulan"
+
+#: modules/Monthly_Cashes.php:133
+msgid "Monthly cashes saved successfully"
+msgstr "Uang kas berhasil disimpan"
+
+#: modules/Posts.php:33 modules/Posts.php:137 modules/Posts.php:140
+msgid "Title"
+msgstr "Judul"
+
+#: modules/Posts.php:34
+msgid "Hits"
+msgstr "Jumlah Pengunjung"
+
+#: modules/Posts.php:48 modules/Users.php:58
+msgid "Show"
+msgstr "Selengkapnya"
+
+#: modules/Posts.php:100
+msgid "Post successfully created"
+msgstr "Berita berhasil ditambah"
+
+#: modules/Posts.php:124
+msgid "Post successfully updated"
+msgstr "Berita berhasil diupdate"
+
+#: modules/Posts.php:146 modules/Posts.php:149
+msgid "URL Alias"
+msgstr "Link"
+
+#: modules/Posts.php:155 modules/Posts.php:158
+msgid "Body"
+msgstr "Isi"
+
+#: modules/Posts.php:176 modules/Users.php:446 modules/Users.php:478
+#: modules/Users.php:486 modules/Users.php:494
+msgid "is taken"
+msgstr "sudah ada"
+
+#: modules/Sessions.php:20
+msgid "incorrect email and / or password, please try again"
+msgstr "email dan / atau password salah, silahkan coba lagi"
+
+#: modules/Sessions.php:38 modules/Sessions.php:40
+msgid "ID / Email"
+msgstr "Nomor Anggota / Email"
+
+#: modules/Sessions.php:84 modules/Users.php:34 modules/Users.php:99
+msgid "Age"
+msgstr "Usia"
+
+#: modules/Sessions.php:85
+#, php-format
+msgid "%d Year"
+msgid_plural "%d Years"
+msgstr[0] "%d Tahun"
+
+#: modules/Sessions.php:108 modules/Users.php:316
+msgid "Forbiscom ID"
+msgstr "User ID Forbiscom"
+
+#: modules/Sessions.php:112 modules/Users.php:127 modules/Users.php:354
+#: modules/Users.php:367
+msgid "Join"
+msgstr "Bergabung"
+
+#: modules/Sessions.php:112 modules/Users.php:127 modules/Users.php:354
+#: modules/Users.php:381
+msgid "Permanent"
+msgstr "Jadi Anggota Tetap"
+
+#: modules/Sessions.php:116 modules/Users.php:38 modules/Users.php:131
+msgid "Cash Status"
+msgstr "Status Uang Kas"
+
+#: modules/Sessions.php:120 modules/Users.php:135 modules/Users.php:342
+msgid "Role"
+msgid_plural "Roles"
+msgstr[0] "Hak Akses"
+
+#: modules/Sessions.php:124
+msgid "Last Login"
+msgstr "Terakhir Kali Masuk"
+
+#: modules/Sessions.php:125 modules/Sessions.php:132
+msgid "Hour"
+msgstr "Jam"
+
+#: modules/Sessions.php:131
+msgid "Last Password Change"
+msgstr "Pergantian Password Terakhir"
+
+#: modules/Sessions.php:140
+msgid "Change Password"
+msgstr "Mengganti Password"
+
+#: modules/Sessions.php:154
+msgid ""
+"To change your password, enter your current password and the new password"
+msgstr ""
+"Untuk mengganti password, silahkan masukkan password lama dan password baru"
+
+#: modules/Sessions.php:156
+msgid "Current Password"
+msgstr "Password Lama"
+
+#: modules/Sessions.php:163
+msgid "New Password"
+msgstr "Password Baru"
+
+#: modules/Sessions.php:170
+msgid "Password Confirmation"
+msgstr "Password Baru (Sekali Lagi)"
+
+#: modules/Sessions.php:191
+msgid ""
+"minimum 8 characters; consists of small letters (a-z), capital letters (A-Z) "
+"and digits (0-9)"
+msgstr ""
+"minimal 8 karakter; terdiri dari huruf kecil (a-z), huruf besar (A-Z) dan "
+"angka (0-9)"
+
+#: modules/Sessions.php:197
+msgid "must match the new password"
+msgstr "harus sama dengan password baru"
+
+#: modules/Sessions.php:202
+msgid "is wrong"
+msgstr "masih salah"
+
+#: modules/Sessions.php:205
+msgid "you cannot reuse a previous password"
+msgstr "anda tidak dapat kembali menggunakan password lama"
+
+#: modules/Sessions.php:211
+msgid ""
+"Password changed successfully, please logout and login to apply the new "
+"password"
+msgstr ""
+"Password berhasil diganti, silahkan keluar dan kembali masuk untuk "
+"menggunakan password baru"
+
+#: modules/Sessions.php:216
+msgid "Password changed unsuccessfully"
+msgstr "Password tidak berhasil diganti"
+
+#: modules/Users.php:22 modules/Users.php:23
+msgid "ID / Name"
+msgstr "Nomor Anggota / Nama"
+
+#: modules/Users.php:35
+msgid "Join Date"
+msgstr "Tanggal Bergabung"
+
+#: modules/Users.php:36
+msgid "Years of Membership"
+msgstr "Masa Keanggotaan (Tahun)"
+
+#: modules/Users.php:37
+msgid "Status"
+msgstr ""
+
+#: modules/Users.php:55 modules/Users.php:132
+#, php-format
+msgid "Since %s / %s"
+msgstr "Sejak %s / %s"
+
+#: modules/Users.php:167
+msgid "User created successfully"
+msgstr "Anggota berhasil ditambah"
+
+#: modules/Users.php:206
+msgid "User updated successfully"
+msgstr "Anggota berhasil diupdate"
+
+#: modules/Users.php:229 modules/Users.php:230
+msgid "First"
+msgstr "Depan"
+
+#: modules/Users.php:233 modules/Users.php:234
+msgid "Middle"
+msgstr "Tengah"
+
+#: modules/Users.php:237 modules/Users.php:238
+msgid "Last"
+msgstr "Belakang"
+
+#: modules/Users.php:354 modules/Users.php:395
+msgid "Resign"
+msgstr "Keluar"
+
+#: modules/Users.php:511
+#, php-format
+msgid "User with ID %s is not found"
+msgstr "Anggota dengan nomor anggota %s tidak ada."
