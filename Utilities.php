@@ -4,17 +4,11 @@ class Utilities {
 	private function __construct() { }
 
 	static function get_real_ip_address() {
-		$ip = $_SERVER['REMOTE_ADDR'];
-
-		if (!empty($_SERVER['HTTP_CLIENT_IP'])) { $ip = $_SERVER['HTTP_CLIENT_IP']; }
-		else if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) { $ip = $_SERVER['HTTP_X_FORWARDED_FOR']; }
-
-		return $ip;
+		return $_SERVER['HTTP_CLIENT_IP'] ?: $_SERVER['HTTP_X_FORWARDED_FOR'] ?: $_SERVER['REMOTE_ADDR'];
 	}
 
 	static function generate_salt() {
-		mt_srand(microtime(true) * 100000 + memory_get_usage(true));
-		return md5(uniqid(mt_rand(), true));
+		return bin2hex(random_bytes(16));
 	}
 
 	static function encrypt_password($password) { return password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]); }
