@@ -31,11 +31,11 @@ foreach (['request_method', 'request_time', 'request_time_float', 'redirect_url'
 	$$item = $_SERVER[$k];
 }
 foreach (ROUTES as $item) {
-	if ($request_method === $item['request_method'] && preg_match($item['url'], $redirect_url, $param)) {
+	if ($request_method === $item->get('request_method') && preg_match($item->get('url'), $redirect_url, $param)) {
 		$route = [
-			'controller' => $item['controller'],
-			'method' => $item['method'],
-			'param' => $param
+			'controller' => $item->get('controller'),
+			'method'     => $item->get('method'),
+			'param'      => $param
 		];
 		break;
 	}
