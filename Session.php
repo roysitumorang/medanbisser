@@ -24,15 +24,14 @@ class Session {
 	}
 
 	public function write($id, $data) {
-		$stmt = $this->_db->prepare('WITH upsert AS (UPDATE sessions SET user_id = :user_id, ip = :ip, data = :data, last_modified = :last_modified WHERE id = :id RETURNING 1) INSERT INTO sessions (id, user_id, ip, data, last_modified) SELECT :id, :user_id, :ip, :data, :last_modified WHERE NOT EXISTS(SELECT 1 FROM upsert)');
-		foreach ([[':id', $id, PDO::PARAM_STR]
-			, [':user_id', igbinary_unserialize($data)['user_id'], PDO::PARAM_INT]
-			, [':ip', Utilities::get_real_ip_address(), PDO::PARAM_STR]
-			, [':data', base64_encode($data), PDO::PARAM_LOB]
-			, [':last_modified', time(), PDO::PARAM_INT]] as $arg) {
-			call_user_func_array([$stmt, 'bindValue'], $arg);
-		}
-		return $stmt->execute();
+		$stmt = $this->_db->prepare('INSERT INTO sessions (id, user_id, ip, data, last_modified) VALUES (:id, :user_id, :ip, :data, :last_modified) ON CONFLICT (id) DO UPDATE SET user_id = :user_id, ip = :ip, data = :data, last_modified = :last_modified');
+		return $stmt->execute([
+			':id'            => $id,
+			':user_id'       => igbinary_unserialize($data)['user_id'],
+			':ip'            => Utilities::get_real_ip_address(),
+			':data'          => base64_encode($data),
+			':last_modified' => time(),
+		]);
 	}
 
 	public function destroy($id) {

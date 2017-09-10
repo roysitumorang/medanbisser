@@ -61,15 +61,14 @@ CONTENT;
 	function show($get, $post, $files) {
 		$post = $this->_prepare_data();
 		if (!in_array($post->id, [4, 5])) {
-			$stmt = $this->_db->prepare('WITH upsert AS (UPDATE post_access_logs SET hits = hits + 1, modified_by = :by, modified_ip = :ip, modified_at = :at WHERE post_id = :post_id AND user_id = :user_id RETURNING *) INSERT INTO post_access_logs (post_id, user_id, hits, created_by, created_ip, created_at) SELECT :post_id, :user_id, 1, :by, :ip, :at WHERE NOT EXISTS(SELECT * FROM upsert)');
-			foreach ([[':by', $_SESSION['user_id']]
-				, [':ip', Utilities::get_real_ip_address()]
-				, [':at', $this->_now->format('Y-m-d H:i:s')]
-				, [':post_id', $post->id]
-				, [':user_id', $_SESSION['user_id']]] as $arg) {
-				call_user_func_array([$stmt, 'bindValue'], $arg);
-			}
-			$stmt->execute();
+			$stmt = $this->_db->prepare('INSERT INTO post_access_logs (post_id, user_id, hits, created_by, created_ip, created_at) VALUES (:post_id, :user_id, 1, :by, :ip, :at) ON CONFLICT (post_id, user_id) DO UPDATE SET hits = post_access_logs.hits + 1, modified_by = :by, modified_ip = :ip, modified_at = :at');
+			$stmt->execute([
+				':by'      => $_SESSION['user_id'],
+				':ip'      => Utilities::get_real_ip_address(),
+				':at'      => $this->_now->format('Y-m-d H:i:s'),
+				':post_id' => $post->id,
+				':user_id' => $_SESSION['user_id'],
+			]);
 		}
 		$menu = '';
 		if ($_SESSION['user_id']) {
