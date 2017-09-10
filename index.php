@@ -64,7 +64,7 @@ setlocale(LC_ALL, $locale . '.utf8');
 bindtextdomain($locale, dirname(__FILE__) . '/locales');
 bind_textdomain_codeset($domain, 'UTF-8');
 textdomain($locale);
-if (!$_SESSION['role_permissions']->get($route['controller'])->contains($route['method'])) {
+if (!$_SESSION['role_permissions']->hasKey($route['controller']) || !$_SESSION['role_permissions']->get($route['controller'])->contains($route['method'])) {
 	$route = [
 		'controller' => 'Posts',
 		'method'     => 'show',
