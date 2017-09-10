@@ -21,7 +21,7 @@ class Posts extends Application {
 		$this->_paginate($get, Utilities::link_to('posts'), $params, 'p.id, p.title, p.url_alias, c.full_name AS created_by, p.created_at, m.full_name AS modified_by, p.modified_at');
 		$this->_content .= '
 			<h2 class="navbar-form navbar-left"><i class="fa fa-list">&nbsp;</i> ' . ngettext('Post', 'Posts', 2) . '</h2>
-			<form method="GET" action="/posts" class="navbar-form navbar-right" role="search" onsubmit="(\'' . _('Search') . '\'==$(\'[name=q\').val())&amp;&amp;$(\'[name=q]\').val(\'\')">
+			<form method="GET" action="' . Utilities::link_to('posts') . '" class="navbar-form navbar-right" role="search" onsubmit="(\'' . _('Search') . '\'==$(\'[name=q\').val())&amp;&amp;$(\'[name=q]\').val(\'\')">
 				<input type="text" name="q" value="' . $get['q'] . '" class="form-control" placeholder="' . _('Search') . '">
 				<button type="submit" class="btn btn-default"><i class="fa fa-search">&nbsp;</i> ' . _('Search') . '</button>' .
 		($this->_allowed_to_access_link('Posts', 'new') ? '<a type="button" href="' . Utilities::link_to('posts/new') . '" class="btn btn-default"><i class="fa fa-user-plus">&nbsp;</i>&nbsp;' . _('New') . '</a>' : '') .
