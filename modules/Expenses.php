@@ -1,9 +1,11 @@
 <?php
 
+use Ds\Map;
+
 class Expenses extends Application {
 	function __construct($db, $route) {
 		parent::__construct($db, $route);
-		!apcu_exists('expenses_order_fields') && apcu_add('expenses_order_fields', new ArrayObject(['Tanggal' => 'dot DESC']));
+		!apcu_exists('expenses_order_fields') && apcu_add('expenses_order_fields', new Map(['Tanggal' => 'dot DESC']));
 		$this->_order_fields = apcu_fetch('expenses_order_fields');
 	}
 
@@ -39,8 +41,7 @@ class Expenses extends Application {
 				</thead>
 				<tbody>';
 
-		while ($this->_rows->valid()) {
-			$row = $this->_rows->current();
+		foreach ($this->_rows as $row) {
 			$this->_content .=
 					"<tr class=\"text-nowrap\">
 						<td class=\"text-right\">" . $this->_date_formatter->format(new DateTime($row->dot)) . "</td>
@@ -50,7 +51,6 @@ class Expenses extends Application {
 			($this->_allowed_to_access_link('Expenses', 'edit') ? "<a type=\"button\" href=\"" . Utilities::link_to("expenses/{$row->id}/edit") . "\" class=\"btn btn-primary\"><i class=\"fa fa-edit\">&nbsp;</i> " . _('Edit') . "</a>" : '') .
 						"</td>
 					</tr>";
-			$this->_rows->next();
 		}
 
 		$this->_content .=<<<CONTENT

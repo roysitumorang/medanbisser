@@ -1,9 +1,11 @@
 <?php
 
+use Ds\Map;
+
 class Posts extends Application {
 	function __construct($db, $route) {
 		parent::__construct($db, $route);
-		!apcu_exists('posts_order_fields') && apcu_add('posts_order_fields', new ArrayObject(['Tanggal' => 'id DESC']));
+		!apcu_exists('posts_order_fields') && apcu_add('posts_order_fields', new Map(['Tanggal' => 'id DESC']));
 		$this->_order_fields = apcu_fetch('posts_order_fields');
 	}
 
@@ -16,7 +18,7 @@ class Posts extends Application {
 			$params = [$q, $q];
 			$this->_query .= ' AND (p.title LIKE ? OR p.body LIKE ?)';
 		}
-		$this->_paginate($get, '/posts', $params, 'p.id, p.title, p.url_alias, c.full_name AS created_by, p.created_at, m.full_name AS modified_by, p.modified_at');
+		$this->_paginate($get, Utilities::link_to('posts'), $params, 'p.id, p.title, p.url_alias, c.full_name AS created_by, p.created_at, m.full_name AS modified_by, p.modified_at');
 		$this->_content .= '
 			<h2 class="navbar-form navbar-left"><i class="fa fa-list">&nbsp;</i> ' . ngettext('Post', 'Posts', 2) . '</h2>
 			<form method="GET" action="/posts" class="navbar-form navbar-right" role="search" onsubmit="(\'' . _('Search') . '\'==$(\'[name=q\').val())&amp;&amp;$(\'[name=q]\').val(\'\')">
@@ -37,8 +39,7 @@ class Posts extends Application {
 				</thead>
 				<tbody>';
 
-		while ($this->_rows->valid()) {
-			$row = $this->_rows->current();
+		foreach ($this->_rows as $row) {
 			$this->_content .= "
 					<tr title='Dibuat oleh $row->created_by tanggal " . $this->_date_formatter->format(new DateTime($row->created_at)) . ($row->modified_by ? ", diupdate oleh $row->modified_by tanggal " . $this->_date_formatter->format(new DateTime($row->modified_at)) : '') . "'>
 						<td class=\"text-center\">" . $this->_date_formatter->format(new DateTime($row->created_at)) . "</td>
@@ -48,7 +49,6 @@ class Posts extends Application {
 							<a type=\"button\" href=\"" . Utilities::link_to($row->url_alias) . "\" class=\"btn btn-info\"><i class=\"fa fa-angle-double-right\">&nbsp;</i> " . _('Show') . "</a>
 						</td>
 					</tr>";
-			$this->_rows->next();
 		}
 
 		$this->_content .=<<<CONTENT

@@ -1,41 +1,44 @@
 <?php
 
+use Ds\{Map, Vector};
+
 abstract class Application {
-	protected $_db, $_controller, $_method, $_param, $_content = '', $_pagination = '', $_query, $_module, $_error_messages = [], $_alert = [], $_limits, $_limit, $_page, $_offset, $_order_fields = [], $_order_by = '', $_rows, $_javascript = '', $_select_period_options, $_now, $_date_formatter, $_datetime_formatter, $_period_formatter, $_period, $_locale;
+	protected $_db, $_controller, $_method, $_param, $_content = '', $_pagination = '', $_query, $_module, $_error_messages = [], $_alert = [], $_limits, $_limit, $_page, $_offset, $_order_fields, $_order_by = '', $_rows, $_javascript = '', $_select_period_options, $_now, $_date_formatter, $_datetime_formatter, $_period_formatter, $_periods, $_locale;
 
 	function __construct(PDO $db, $route = []) {
-		$this->_db = $db;
+		$this->_db         = $db;
 		$this->_controller = $route['controller'];
-		$this->_method = $route['method'] ?: 'index';
-		$this->_param = $route['param'];
+		$this->_method     = $route['method'] ?: 'index';
+		$this->_param      = $route['param'];
 		if (!apcu_exists('limits')) {
-			$this->_limits = SplFixedArray::fromArray([10, 25, 50, 100]);
+			$this->_limits = new Vector([10, 25, 50, 100]);
 			apcu_add('limits', $this->_limits);
 		}
-		!$this->_limits && $this->_limits = apcu_fetch('limits');
-		$this->_now = new DateTime;
+		$this->_limits         = apcu_fetch('limits');
+		$this->_now            = new DateTime;
 		$this->_error_messages = &$_SESSION['error_messages'];
-		$this->_alert = &$_SESSION['alert'];
+		$this->_alert          = &$_SESSION['alert'];
 		foreach (['date_formatter' => 'd MMM yyyy', 'datetime_formatter' => 'd MMM yyyy HH.mm', 'period_formatter' => 'MMM yyyy', 'month_formatter' => 'MMM'] as $k => $v) {
 			$this->{"_$k"} = new IntlDateFormatter('id_ID', IntlDateFormatter::LONG, IntlDateFormatter::NONE, 'UTC', IntlDateFormatter::GREGORIAN, $v);
 		}
 		if (!apcu_exists('select_period_options')) {
-			$this->_select_period_options = ['' => '&raquo;'];
+			$this->_select_period_options = new Map(['' => '&raquo;']);
 			foreach (new DatePeriod(new DateTime('2013-01-01'), new DateInterval('P1M'), $this->_now) as $date) {
-				$this->_select_period_options[$date->format('Ym')] = $this->_period_formatter->format($date);
+				$this->_select_period_options->put($date->format('Ym'), $this->_period_formatter->format($date));
 			}
 			apcu_add('select_period_options', $this->_select_period_options);
 		}
-		!$this->_select_period_options && $this->_select_period_options = apcu_fetch('select_period_options');
+		$this->_select_period_options = apcu_fetch('select_period_options');
 		if (!apcu_exists('periods')) {
-			$now = clone $this->_now;
+			$this->_periods = new Map;
+			$now            = clone $this->_now;
 			$now->setDate($now->format('Y') - 1, 1, 1);
 			foreach (new DatePeriod($now, new DateInterval('P1M'), $this->_now) as $date) {
-				$this->_periods[$date->format('Ym')] = $this->_month_formatter->format($date);
+				$this->_periods->put($date->format('Ym'), $this->_month_formatter->format($date));
 			}
 			apcu_add('periods', $this->_periods);
 		}
-		!$this->_periods && $this->_periods = apcu_fetch('periods');
+		$this->_periods = apcu_fetch('periods');
 	}
 
 	function __destruct() { }
@@ -44,42 +47,35 @@ abstract class Application {
 		$stmt = $this->_db->prepare("SELECT r.query FROM modules m JOIN routes r ON m.id = r.module_id WHERE m.name = ? AND r.module_method = 'index'");
 		$stmt->execute([get_class($this)]);
 		$this->_query = $stmt->fetchColumn();
-		if (isset($get['order_by']) && $this->_order_fields->offsetExists($get['order_by'])) {
-			$this->_order_by = $this->_order_fields->offsetGet($get['order_by']);
+		if (isset($get['order_by']) && $this->_order_fields->hasKey($get['order_by'])) {
+			$this->_order_by = $this->_order_fields->get($get['order_by']);
 			return;
 		}
-		$iterator = $this->_order_fields->getIterator();
-		while ($iterator->valid()) {
-			$this->_order_by = $iterator->current();
-			break;
-		}
+		$this->_order_by = $this->_order_fields->first()->value;
 	}
 
 	protected function _paginate($get, $form_action, $params = [], $fields = '') {
-		$this->_limit = $this->_limits->offsetGet($this->_limits->offsetExists($get['limit']) ? $get['limit'] : 0);
-		$this->_page = $get['page'] && $get['page'] > 0 ? $get['page'] : 1;
+		$this->_limit  = $this->_limits->get($get['limit'] ?: 0);
+		$this->_page   = $get['page'] && $get['page'] > 0 ? $get['page'] : 1;
 		$this->_offset = ($this->_page - 1) * $this->_limit;
-		$stmt = $this->_db->prepare(str_replace('*', 'COUNT(1)', $this->_query));
+		$stmt          = $this->_db->prepare(strtr($this->_query, ['*' => 'COUNT(1)']));
 		$stmt->execute($params);
 		$total_rows_in_db = $stmt->fetchColumn();
 
-		$fields && $this->_query = str_replace('*', $fields, $this->_query);
+		$fields && $this->_query = strtr($this->_query, ['*' => $fields]);
 		$stmt = $this->_db->prepare($this->_query . " ORDER BY $this->_order_by LIMIT $this->_limit OFFSET $this->_offset");
 		$stmt->execute($params);
 		$total_rows_limited = $stmt->rowCount();
-		$this->_rows = new SplFixedArray($total_rows_limited);
-		$i = 0;
+		$this->_rows        = new Vector;
 		while ($row = $stmt->fetchObject()) {
-			$this->_rows->offsetSet($i++, $row);
+			$this->_rows->push($row);
 		}
 
 		$this->_pagination .= '<form method="GET" action="' . $form_action . '" class="navbar-form navbar-right">';
 		$get['q'] && $this->_pagination .= '<input type="hidden" name="q" value="' . $get['q'] . '">';
-		$this->_pagination .= "<i class=\"fa fa-sort-alpha-asc\">&nbsp;</i>&nbsp;<strong>" . _('Sort by') . "&nbsp;:&nbsp;</strong>&nbsp;<select class=\"form-control\" name=\"order_by\" onchange=\"$(this).closest('form').submit()\">";
-		$iterator = $this->_order_fields->getIterator();
-		while ($iterator->valid()) {
-			$this->_pagination .= '<option value="' . $iterator->key() . '"' . ($iterator->current() == $this->_order_by ? ' selected' : '') . '>' . $iterator->key() . '</option>';
-			$iterator->next();
+		$this->_pagination .= "<i class=\"fa fa-sort-alpha-asc\">&nbsp;</i>&nbsp;<strong>" . _('Sort by') . "&nbsp;:&nbsp;</strong>&nbsp;<select class=\"form-control\" name=\"order_by\" onchange=\"this.closest('form').submit()\">";
+		foreach ($this->_order_fields->pairs() as $item) {
+			$this->_pagination .= '<option value="' . $item->key . '"' . ($item->value == $this->_order_by ? ' selected' : '') . '>' . $item->key . '</option>';
 		}
 		$this->_pagination .= "</select><strong>&nbsp;,&nbsp;<i class=\"fa fa-sort-amount-asc\">&nbsp;</i>&nbsp;" . _('Size per page') . "&nbsp;:&nbsp;</strong>&nbsp;<select class=\"form-control\" name=\"limit\" onchange=\"$(this).closest('form').submit()\">";
 		foreach ($this->_limits as $k => $v) {
@@ -87,7 +83,7 @@ abstract class Application {
 		}
 		$this->_pagination .= '</select>';
 		if ($total_rows_in_db > $this->_limit) {
-			$total_pages = ceil($total_rows_in_db / $this->_limit);
+			$total_pages        = ceil($total_rows_in_db / $this->_limit);
 			$this->_pagination .= "<strong>&nbsp;,&nbsp;<i class=\"fa fa-sort-numeric-asc\">&nbsp;</i>&nbsp;" . sprintf(_('Total %d of %d items , Page'), $total_rows_limited, $total_rows_in_db) . "&nbsp;:&nbsp;</strong>&nbsp;";
 			foreach (range(1, $total_pages) as $i) {
 				$this->_pagination .= ($i > 1 ? ',' : '') . '&nbsp;' . ($i == $this->_page ? "<strong>$i</strong>" : "<a href=\"#\" data-page=\"$i\">$i</a>") . '&nbsp;';
@@ -95,7 +91,7 @@ abstract class Application {
 			$this->_pagination .= '<strong>&nbsp;' . sprintf(_('of %d pages'), $total_pages) . '</strong>';
 		}
 		$this->_pagination .= "</form>";
-		$this->_javascript = jsmin(<<<CONTENT
+		$this->_javascript  = jsmin(<<<CONTENT
 			document.querySelectorAll("a[data-page]").forEach(element => {
 				element.onclick = event => {
 					let parent = event.target.parentNode, input = document.createElement('input');
@@ -161,7 +157,7 @@ CONTENT
 	}
 
 	protected function _db_update($table, $data = []) {
-		$skipped_fields = new ArrayObject(['id' => 1, 'created_by' => 1, 'created_ip' => 1, 'created_at' => 1]);
+		$skipped_fields = new Vector(['id', 'created_by', 'created_ip', 'created_at']);
 		$data['modified_by'] = $_SESSION['user_id'];
 		$data['modified_ip'] = Utilities::get_real_ip_address();
 		$data['modified_at'] = $this->_now->format('Y-m-d H:i:s');
@@ -171,7 +167,7 @@ CONTENT
 		$k = 0;
 		foreach (range(0, $result->columnCount() - 1) as $i) {
 			$field = $result->getColumnMeta($i);
-			if ($skipped_fields->offsetExists($field['name']) || !isset($data[$field['name']])) continue;
+			if ($skipped_fields->contains($field['name']) || !isset($data[$field['name']])) continue;
 			$query .= ($k++ ? ',' : '') . sprintf(' "%s" = ?', $field['name']);
 			$params[] = $data[$field['name']] ?: null;
 		}

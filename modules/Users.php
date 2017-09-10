@@ -1,9 +1,11 @@
 <?php
 
+use Ds\Map;
+
 class Users extends Application {
 	function __construct($db, $route) {
 		parent::__construct($db, $route);
-		!apcu_exists('users_order_fields') && apcu_add('users_order_fields', new ArrayObject(['Nama' => 'full_name', 'Umur' => 'age', 'Nomor ID' => 'id']));
+		!apcu_exists('users_order_fields') && apcu_add('users_order_fields', new Map(['Nama' => 'full_name', 'Umur' => 'age', 'Nomor ID' => 'id']));
 		$this->_order_fields = apcu_fetch('users_order_fields');
 	}
 
@@ -41,8 +43,7 @@ class Users extends Application {
 				</thead>
 				<tbody>";
 
-		while ($this->_rows->valid()) {
-			$row = $this->_rows->current();
+		foreach ($this->_rows as $row) {
 			$id = str_repeat('0', 3 - strlen($row->id)) . $row->id;
 			$this->_content .= "
 					<tr>
@@ -58,7 +59,6 @@ class Users extends Application {
 							<a type=\"button\" href=\"" . Utilities::link_to("users/$row->id") . "\" class=\"btn btn-info\"><i class=\"fa fa-angle-double-right\">&nbsp;</i> " . _('Show') . "</a>
 						</td>
 					</tr>";
-			$this->_rows->next();
 		}
 
 		$this->_content .=<<<CONTENT

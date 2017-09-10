@@ -1,11 +1,13 @@
 <?php
 
+use Ds\Map;
+
 class Monthly_Cashes extends Application {
 	protected $_current_year;
 
 	function __construct($db, $route) {
 		parent::__construct($db, $route);
-		!apcu_exists('monthly_cashes_order_fields') && apcu_add('monthly_cashes_order_fields', new ArrayObject(['Nama' => 'full_name', 'Nomor ID' => 'id']));
+		!apcu_exists('monthly_cashes_order_fields') && apcu_add('monthly_cashes_order_fields', new Map(['Nama' => 'full_name', 'Nomor ID' => 'id']));
 		$this->_order_fields = apcu_fetch('monthly_cashes_order_fields');
 		$this->_current_year = $this->_now->format('Y');
 	}
@@ -54,8 +56,7 @@ class Monthly_Cashes extends Application {
 				<tbody>
 CONTENT;
 
-		while ($this->_rows->valid()) {
-			$row = $this->_rows->current();
+		foreach ($this->_rows as $row) {
 			$id = str_repeat('0', 3 - strlen($row->id)) . $row->id;
 			$this->_content .= "
 					<tr>
@@ -69,7 +70,6 @@ CONTENT;
 						<td class=\"text-right text-nowrap\">" . number_format($row->paid) . "</td>
 						<td class=\"text-right text-nowrap\">" . ($row->months_of_debt ? sprintf(ngettext('%d Month', '%d Months', $row->months_of_debt), $row->months_of_debt) . ' / ' . number_format($row->debt) : '-') . "</td>
 					</tr>";
-			$this->_rows->next();
 		}
 
 		$this->_content .=<<<CONTENT

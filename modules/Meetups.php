@@ -1,11 +1,13 @@
 <?php
 
+use Ds\Map;
+
 class Meetups extends Application {
 	protected $_current_year, $_current_period;
 
 	function __construct($db, $route) {
 		parent::__construct($db, $route);
-		!apcu_exists('meetups_order_fields') && apcu_add('meetups_order_fields', new ArrayObject(['Nama' => 'full_name', 'Nomor ID' => 'id']));
+		!apcu_exists('meetups_order_fields') && apcu_add('meetups_order_fields', new Map(['Nama' => 'full_name', 'Nomor ID' => 'id']));
 		$this->_order_fields = apcu_fetch('meetups_order_fields');
 		$this->_current_year = $this->_now->format('Y');
 		$this->_current_period = $this->_now->format('Ym');
@@ -19,7 +21,7 @@ class Meetups extends Application {
 			$params = [$q, $q];
 			$this->_query .= ' WHERE u.id::text LIKE ? OR u.full_name LIKE ?';
 		}
-		$this->_paginate($get, '/meetups', $params, 'u.id, u.full_name, m.prev_01, m.prev_02, m.prev_03, m.prev_04, m.prev_05, m.prev_06, m.prev_07, m.prev_08, m.prev_09, m.prev_10, m.prev_11, m.prev_12, m.cur_01, m.cur_02, m.cur_03, m.cur_04, m.cur_05, m.cur_06, m.cur_07, m.cur_08, m.cur_09, m.cur_10, m.cur_11, m.cur_12');
+		$this->_paginate($get, Utilities::link_to('meetups'), $params, 'u.id, u.full_name, m.prev_01, m.prev_02, m.prev_03, m.prev_04, m.prev_05, m.prev_06, m.prev_07, m.prev_08, m.prev_09, m.prev_10, m.prev_11, m.prev_12, m.cur_01, m.cur_02, m.cur_03, m.cur_04, m.cur_05, m.cur_06, m.cur_07, m.cur_08, m.cur_09, m.cur_10, m.cur_11, m.cur_12');
 		$this->_content .= '
 			<h2 class="navbar-form navbar-left"><i class="fa fa-calendar">&nbsp;</i> ' . ngettext('Meetup', 'Meetups', 2) . '</h2>
 			<form method="GET" action="/meetups" class="navbar-form navbar-right" role="' . _('Search') . '" onsubmit="(\'' . _('Search') . '\'==$(\'[name=q]\').val())&amp;&amp;$(\'[name=q]\').val(\'\')">
@@ -54,8 +56,7 @@ class Meetups extends Application {
 				</thead>
 				<tbody>';
 
-		while ($this->_rows->valid()) {
-			$row = $this->_rows->current();
+		foreach ($this->_rows as $row) {
 			$id = str_repeat('0', 3 - strlen($row->id)) . $row->id;
 			$this->_content .=
 					"<tr>
@@ -68,7 +69,6 @@ class Meetups extends Application {
 			}
 
 			$this->_content .= '</tr>';
-			$this->_rows->next();
 		}
 
 		$this->_content .=<<<CONTENT
