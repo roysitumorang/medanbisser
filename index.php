@@ -33,7 +33,7 @@ require 'Utilities.php';
 require 'Routes.php';
 define('ROUTES', igbinary_unserialize($redis->get('routes')));
 require 'Role_Permissions.php';
-define('ROLE_PERMISSIONS', igbinary_unserialize($redis->get('role_permissions'))[ROLE]);
+$_SESSION['role_permissions'] = igbinary_unserialize($redis->get('role_permissions'))->get(ROLE);
 $route = null;
 foreach (['request_method', 'request_time', 'request_time_float', 'redirect_url'] as $item) {
 	$k     = strtoupper($item);

@@ -188,6 +188,6 @@ CONTENT
 	}
 
 	protected function _allowed_to_access_link($controller, $method = 'index') {
-		return in_array($method, ROLE_PERMISSIONS[$controller]);
+		return $_SESSION['role_permissions']->get($controller)->contains($method);
 	}
 }
