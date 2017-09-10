@@ -50,7 +50,11 @@ foreach (ROUTES as $item) {
 	}
 }
 if (!$route) {
-	Utilities::redirect_to(404);
+	$route = [
+		'controller' => 'Posts',
+		'method'     => 'show',
+		'param'      => ['alias' => 404],
+	];
 }
 if (in_array($route['param']['locale'], $locales) && $locale <> $route['param']['locale']) {
 	$locale = $route['param']['locale'];
@@ -61,7 +65,11 @@ bindtextdomain($locale, dirname(__FILE__) . '/locales');
 bind_textdomain_codeset($domain, 'UTF-8');
 textdomain($locale);
 if (!in_array($route['method'], ROLE_PERMISSIONS[$route['controller']])) {
-	Utilities::redirect_to(403);
+	$route = [
+		'controller' => 'Posts',
+		'method'     => 'show',
+		'param'      => ['alias' => 403],
+	];
 }
 $file       = "modules/{$route['controller']}.php";
 $content    = '';
