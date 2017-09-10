@@ -26,7 +26,7 @@ class Meetups extends Application {
 				<input type="text" name="q" value="' . $get['q'] . '" class="form-control" placeholder="' . _('Search') . '">
 				<button type="submit" class="btn btn-default"><i class="fa fa-search">&nbsp;</i> ' . _('Search') . '</button>';
 
-		$this->_content .= $this->_allowed_to_access_link('/meetups/edit') ? '<a type="button" href="/meetups/edit" class="btn btn-default"><i class="fa fa-edit">&nbsp;</i> ' . _('Edit') . '</a>' : '';
+		$this->_content .= $this->_allowed_to_access_link('Meetups', 'edit') ? '<a type="button" href="/meetups/edit" class="btn btn-default"><i class="fa fa-edit">&nbsp;</i> ' . _('Edit') . '</a>' : '';
 
 		$this->_content .= '
 			</form>
