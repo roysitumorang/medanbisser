@@ -20,7 +20,7 @@ class Session implements SessionHandlerInterface {
 	function close() { return true; }
 
 	function read($id) {
-		return $this->_db->query("SELECT data FROM sessions WHERE id = '$id'")->fetchColumn();
+		return $this->_db->query("SELECT data FROM sessions WHERE id = '$id'")->fetchColumn() ?: '';
 	}
 
 	function write($id, $data) {
