@@ -35,15 +35,15 @@ $routes = unserialize($redis->get('routes'));
 require 'Role_Permissions.php';
 $_SESSION['role_permissions'] = unserialize($redis->get('role_permissions'))->get(ROLE);
 $route = null;
-foreach (['request_method', 'request_time', 'request_time_float', 'redirect_url'] as $route) {
-	$k     = strtoupper($route);
-	$$route = $_SERVER[$k];
+foreach (['request_method', 'request_time', 'request_time_float', 'redirect_url'] as $item) {
+	$k     = strtoupper($item);
+	$$item = $_SERVER[$k];
 }
-foreach ($routes as $route) {
-	if ($request_method === $route->get('request_method') && preg_match($route->get('url'), $redirect_url, $param)) {
+foreach ($routes as $item) {
+	if ($request_method === $item->get('request_method') && preg_match($item->get('url'), $redirect_url, $param)) {
 		$route = [
-			'controller' => $route->get('controller'),
-			'method'     => $route->get('method'),
+			'controller' => $item->get('controller'),
+			'method'     => $item->get('method'),
 			'param'      => $param
 		];
 		break;
