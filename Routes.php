@@ -55,7 +55,7 @@ if (!$redis->exists('routes')) {
 			'controller'     => 'Posts',
 			'method'         => 'index',
 		]), new Map([
-			'url'            => 'posts\/(?P<id>\d+)\/edit',
+			'url'            => 'posts\/(?P<id>\d+)',
 			'request_method' => 'POST',
 			'controller'     => 'Posts',
 			'method'         => 'show',
