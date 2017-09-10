@@ -96,11 +96,16 @@ abstract class Application {
 		}
 		$this->_pagination .= "</form>";
 		$this->_javascript = jsmin(<<<CONTENT
-			$("a[data-page]").click(function(e) {
-				var f = $(this).parent();
-				e.preventDefault(),
-				f.append("<input type='hidden' name='page' value='" + $(this).data("page") + "'>"),
-				f.submit()
+			document.querySelectorAll("a[data-page]").forEach(element => {
+				element.onclick = event => {
+					let parent = event.target.parentNode, input = document.createElement('input');
+					event.preventDefault(),
+					input.type = 'hidden',
+					input.name = 'page',
+					input.value = event.target.dataset.page,
+					parent.append(input),
+					parent.submit()
+				}
 			})
 CONTENT
 		);
