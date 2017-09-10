@@ -46,5 +46,5 @@ if (!$redis->exists('role_permissions')) {
 			'Meetups'        => new Set(['index', 'new', 'create']),
 		]),
 	]);
-	$redis->set('role_permissions', igbinary_serialize($role_permissions));
+	$redis->set('role_permissions', serialize($role_permissions));
 }

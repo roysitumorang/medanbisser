@@ -11,7 +11,7 @@ register_shutdown_function(function($server) {
 ob_start(function($buffer) {
 	return preg_replace(['/(\s)+/s', '/\>(\s)+/s', '/(\s)+\</s', '/(\s+)?=(\s+)?/s'], ['\\1', '>', '<', '='], $buffer);
 });
-$db = new PDO('pgsql:dbname=medanbisser_erp', 'postgres', 'postgres', [
+$db = new PDO('pgsql:dbname=medanbisser_erp', 'postgres', 'tR1adpass#', [
 	PDO::ATTR_ERRMODE          => PDO::ERRMODE_EXCEPTION,
 	PDO::ATTR_ORACLE_NULLS     => PDO::NULL_EMPTY_STRING,
 	PDO::ATTR_PERSISTENT       => 1,
@@ -31,19 +31,19 @@ if (!in_array($locale, $locales)) {
 define('ROLE', $_SESSION['user_id'] ? $db->query("SELECT r.name FROM users u JOIN roles r ON u.role_id = r.id WHERE u.id = {$_SESSION['user_id']}")->fetchColumn() : 'Anonymous');
 require 'Utilities.php';
 require 'Routes.php';
-define('ROUTES', igbinary_unserialize($redis->get('routes')));
+$routes = unserialize($redis->get('routes'));
 require 'Role_Permissions.php';
-$_SESSION['role_permissions'] = igbinary_unserialize($redis->get('role_permissions'))->get(ROLE);
+$_SESSION['role_permissions'] = unserialize($redis->get('role_permissions'))->get(ROLE);
 $route = null;
-foreach (['request_method', 'request_time', 'request_time_float', 'redirect_url'] as $item) {
-	$k     = strtoupper($item);
-	$$item = $_SERVER[$k];
+foreach (['request_method', 'request_time', 'request_time_float', 'redirect_url'] as $route) {
+	$k     = strtoupper($route);
+	$$route = $_SERVER[$k];
 }
-foreach (ROUTES as $item) {
-	if ($request_method === $item->get('request_method') && preg_match($item->get('url'), $redirect_url, $param)) {
+foreach ($routes as $route) {
+	if ($request_method === $route->get('request_method') && preg_match($route->get('url'), $redirect_url, $param)) {
 		$route = [
-			'controller' => $item->get('controller'),
-			'method'     => $item->get('method'),
+			'controller' => $route->get('controller'),
+			'method'     => $route->get('method'),
 			'param'      => $param
 		];
 		break;
@@ -64,7 +64,7 @@ setlocale(LC_ALL, $locale . '.utf8');
 bindtextdomain($locale, dirname(__FILE__) . '/locales');
 bind_textdomain_codeset($domain, 'UTF-8');
 textdomain($locale);
-if (!in_array($route['method'], ROLE_PERMISSIONS[$route['controller']])) {
+if (!$_SESSION['role_permissions']->get($route['controller'])->contains($route['method'])) {
 	$route = [
 		'controller' => 'Posts',
 		'method'     => 'show',
@@ -91,8 +91,8 @@ if (file_exists($file)) {
 	}
 }
 require 'Menus.php';
-foreach ($menus as $item) {
-	$main_menu .= '<li' . ($item['active'] ? ' class="active"' : '') . '><a href="' . Utilities::link_to($item['url']) . '"><i class="fa fa-' . $item['icon'] . '">&nbsp;</i>&nbsp;' . $item['title'] . '</a></li>';
+foreach ($menus as $route) {
+	$main_menu .= '<li' . ($route['active'] ? ' class="active"' : '') . '><a href="' . Utilities::link_to($route['url']) . '"><i class="fa fa-' . $route['icon'] . '">&nbsp;</i>&nbsp;' . $route['title'] . '</a></li>';
 }
 foreach (['error_messages', 'alert'] as $k) {
 	if (isset($_SESSION[$k])) {

@@ -30,7 +30,7 @@ DirectoryIndex index.php
 	php_value session.gc_divisor        1
 #	php_value session.save_handler      redis
 #	php_value session.save_path         tcp://localhost:6379?weight=1&persistent=1
-	php_value session.serialize_handler igbinary
+	php_value session.serialize_handler php
 </IfModule>
 
 <IfModule mod_deflate.c>

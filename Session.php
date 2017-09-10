@@ -20,16 +20,16 @@ class Session {
 	public function close() { return true; }
 
 	public function read($id) {
-		return base64_decode($this->_db->query("SELECT data FROM sessions WHERE id = '$id'")->fetchColumn());
+		return $this->_db->query("SELECT data FROM sessions WHERE id = '$id'")->fetchColumn();
 	}
 
 	public function write($id, $data) {
 		$stmt = $this->_db->prepare('INSERT INTO sessions (id, user_id, ip, data, last_modified) VALUES (:id, :user_id, :ip, :data, :last_modified) ON CONFLICT (id) DO UPDATE SET user_id = :user_id, ip = :ip, data = :data, last_modified = :last_modified');
 		return $stmt->execute([
 			':id'            => $id,
-			':user_id'       => igbinary_unserialize($data)['user_id'],
+			':user_id'       => $_SESSION['user_id'],
 			':ip'            => Utilities::get_real_ip_address(),
-			':data'          => base64_encode($data),
+			':data'          => $data,
 			':last_modified' => time(),
 		]);
 	}

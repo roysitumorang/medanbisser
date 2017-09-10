@@ -195,5 +195,5 @@ if (!$redis->exists('routes')) {
 		$route->put('url', '/^\/(?P<locale>en_US|id_ID)\/' . $route->get('url') . '(\/)?$/');
 		$routes->set($i, $route);
 	}
-	$redis->set('routes', igbinary_serialize($routes));
+	$redis->set('routes', serialize($routes));
 }
