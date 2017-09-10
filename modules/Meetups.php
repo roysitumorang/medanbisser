@@ -24,7 +24,7 @@ class Meetups extends Application {
 		$this->_paginate($get, Utilities::link_to('meetups'), $params, 'u.id, u.full_name, m.prev_01, m.prev_02, m.prev_03, m.prev_04, m.prev_05, m.prev_06, m.prev_07, m.prev_08, m.prev_09, m.prev_10, m.prev_11, m.prev_12, m.cur_01, m.cur_02, m.cur_03, m.cur_04, m.cur_05, m.cur_06, m.cur_07, m.cur_08, m.cur_09, m.cur_10, m.cur_11, m.cur_12');
 		$this->_content .= '
 			<h2 class="navbar-form navbar-left"><i class="fa fa-calendar">&nbsp;</i> ' . ngettext('Meetup', 'Meetups', 2) . '</h2>
-			<form method="GET" action="/meetups" class="navbar-form navbar-right" role="' . _('Search') . '" onsubmit="(\'' . _('Search') . '\'==$(\'[name=q]\').val())&amp;&amp;$(\'[name=q]\').val(\'\')">
+			<form method="GET" action="' . Utilities::link_to('meetups') . '" class="navbar-form navbar-right" role="' . _('Search') . '" onsubmit="(\'' . _('Search') . '\'==$(\'[name=q]\').val())&amp;&amp;$(\'[name=q]\').val(\'\')">
 				<input type="text" name="q" value="' . $get['q'] . '" class="form-control" placeholder="' . _('Search') . '">
 				<button type="submit" class="btn btn-default"><i class="fa fa-search">&nbsp;</i> ' . _('Search') . '</button>';
 
