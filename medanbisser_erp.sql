@@ -49,7 +49,7 @@ COMMENT ON SCHEMA "public" IS 'standard public schema';
 
 --
 -- TOC entry 1 (class 3079 OID 12427)
--- Name: plpgsql; Type: EXTENSION; Schema: -; Owner: 
+-- Name: plpgsql; Type: EXTENSION; Schema: -; Owner:
 --
 
 CREATE EXTENSION IF NOT EXISTS "plpgsql" WITH SCHEMA "pg_catalog";
@@ -58,7 +58,7 @@ CREATE EXTENSION IF NOT EXISTS "plpgsql" WITH SCHEMA "pg_catalog";
 --
 -- TOC entry 2566 (class 0 OID 0)
 -- Dependencies: 1
--- Name: EXTENSION "plpgsql"; Type: COMMENT; Schema: -; Owner: 
+-- Name: EXTENSION "plpgsql"; Type: COMMENT; Schema: -; Owner:
 --
 
 COMMENT ON EXTENSION "plpgsql" IS 'PL/pgSQL procedural language';
@@ -322,36 +322,36 @@ CREATE FUNCTION "date_format"(timestamp without time zone, "text") RETURNS "text
       IF c = '%' AND i != pg_catalog.length($2) THEN
         n := SUBSTRING ($2 FROM (i + 1) FOR 1);
         SELECT INTO res CASE
-          WHEN n = 'a' THEN pg_catalog.to_char($1, 'Dy') 
-          WHEN n = 'b' THEN pg_catalog.to_char($1, 'Mon') 
-          WHEN n = 'c' THEN pg_catalog.to_char($1, 'FMMM') 
-          WHEN n = 'D' THEN pg_catalog.to_char($1, 'FMDDth') 
-          WHEN n = 'd' THEN pg_catalog.to_char($1, 'DD') 
-          WHEN n = 'e' THEN pg_catalog.to_char($1, 'FMDD') 
-          WHEN n = 'f' THEN pg_catalog.to_char($1, 'US') 
-          WHEN n = 'H' THEN pg_catalog.to_char($1, 'HH24') 
-          WHEN n = 'h' THEN pg_catalog.to_char($1, 'HH12') 
-          WHEN n = 'I' THEN pg_catalog.to_char($1, 'HH12')      
-          WHEN n = 'i' THEN pg_catalog.to_char($1, 'MI') 
-          WHEN n = 'j' THEN pg_catalog.to_char($1, 'DDD') 
-          WHEN n = 'k' THEN pg_catalog.to_char($1, 'FMHH24') 
-          WHEN n = 'l' THEN pg_catalog.to_char($1, 'FMHH12') 
-          WHEN n = 'M' THEN pg_catalog.to_char($1, 'FMMonth') 
-          WHEN n = 'm' THEN pg_catalog.to_char($1, 'MM') 
-          WHEN n = 'p' THEN pg_catalog.to_char($1, 'AM') 
-          WHEN n = 'r' THEN pg_catalog.to_char($1, 'HH12:MI:SS AM') 
+          WHEN n = 'a' THEN pg_catalog.to_char($1, 'Dy')
+          WHEN n = 'b' THEN pg_catalog.to_char($1, 'Mon')
+          WHEN n = 'c' THEN pg_catalog.to_char($1, 'FMMM')
+          WHEN n = 'D' THEN pg_catalog.to_char($1, 'FMDDth')
+          WHEN n = 'd' THEN pg_catalog.to_char($1, 'DD')
+          WHEN n = 'e' THEN pg_catalog.to_char($1, 'FMDD')
+          WHEN n = 'f' THEN pg_catalog.to_char($1, 'US')
+          WHEN n = 'H' THEN pg_catalog.to_char($1, 'HH24')
+          WHEN n = 'h' THEN pg_catalog.to_char($1, 'HH12')
+          WHEN n = 'I' THEN pg_catalog.to_char($1, 'HH12')
+          WHEN n = 'i' THEN pg_catalog.to_char($1, 'MI')
+          WHEN n = 'j' THEN pg_catalog.to_char($1, 'DDD')
+          WHEN n = 'k' THEN pg_catalog.to_char($1, 'FMHH24')
+          WHEN n = 'l' THEN pg_catalog.to_char($1, 'FMHH12')
+          WHEN n = 'M' THEN pg_catalog.to_char($1, 'FMMonth')
+          WHEN n = 'm' THEN pg_catalog.to_char($1, 'MM')
+          WHEN n = 'p' THEN pg_catalog.to_char($1, 'AM')
+          WHEN n = 'r' THEN pg_catalog.to_char($1, 'HH12:MI:SS AM')
           WHEN n = 'S' THEN pg_catalog.to_char($1, 'SS')
           WHEN n = 's' THEN pg_catalog.to_char($1, 'SS')
-          WHEN n = 'T' THEN pg_catalog.to_char($1, 'HH24:MI:SS') 
+          WHEN n = 'T' THEN pg_catalog.to_char($1, 'HH24:MI:SS')
           WHEN n = 'U' THEN pg_catalog.lpad(week($1::date, 0)::text, 2, '0')
           WHEN n = 'u' THEN pg_catalog.lpad(week($1::date, 1)::text, 2, '0')
           WHEN n = 'V' THEN pg_catalog.lpad(week($1::date, 2)::text, 2, '0')
           WHEN n = 'v' THEN pg_catalog.lpad(week($1::date, 3)::text, 2, '0')
-          WHEN n = 'W' THEN pg_catalog.to_char($1, 'FMDay') 
+          WHEN n = 'W' THEN pg_catalog.to_char($1, 'FMDay')
           WHEN n = 'w' THEN EXTRACT(DOW FROM $1)::text
           WHEN n = 'X' THEN pg_catalog.lpad(((_calc_week($1::date, _week_mode(2)))[2])::text, 4, '0')
           WHEN n = 'x' THEN pg_catalog.lpad(((_calc_week($1::date, _week_mode(3)))[2])::text, 4, '0')
-          WHEN n = 'Y' THEN pg_catalog.to_char($1, 'YYYY') 
+          WHEN n = 'Y' THEN pg_catalog.to_char($1, 'YYYY')
           WHEN n = 'y' THEN pg_catalog.to_char($1, 'YY')
           WHEN n = '%' THEN pg_catalog.to_char($1, '%')
           ELSE NULL
@@ -362,7 +362,7 @@ CREATE FUNCTION "date_format"(timestamp without time zone, "text") RETURNS "text
         -- Otherwise just append the character to the string
         temp = temp operator(pg_catalog.||) c;
         i := i + 1;
-      END IF; 
+      END IF;
     END LOOP;
     RETURN temp;
   END
@@ -555,7 +555,7 @@ ALTER FUNCTION "public"."get_format"("text", "text") OWNER TO "postgres";
 
 CREATE FUNCTION "hour"(interval) RETURNS integer
     LANGUAGE "sql" IMMUTABLE STRICT
-    AS $_$ 
+    AS $_$
   SELECT EXTRACT (HOUR FROM $1)::integer
 $_$;
 
@@ -569,7 +569,7 @@ ALTER FUNCTION "public"."hour"(interval) OWNER TO "postgres";
 
 CREATE FUNCTION "last_day"(timestamp without time zone) RETURNS "date"
     LANGUAGE "sql" IMMUTABLE STRICT
-    AS $_$ 
+    AS $_$
   SELECT CASE
     WHEN EXTRACT(MONTH FROM $1) = 12 THEN
       (((EXTRACT(YEAR FROM $1) + 1) operator(pg_catalog.||) '-01-01')::date - INTERVAL '1 day')::date
@@ -841,36 +841,36 @@ CREATE FUNCTION "str_to_date"("text", "text") RETURNS timestamp without time zon
       IF c = '%' AND i != pg_catalog.length($2) THEN
         n := SUBSTRING ($2 FROM (i + 1) FOR 1);
         SELECT INTO res CASE
-          WHEN n = 'a' THEN 'Dy' 
-          WHEN n = 'b' THEN 'Mon' 
-          WHEN n = 'c' THEN 'FMMM' 
-          WHEN n = 'D' THEN 'FMDDth' 
-          WHEN n = 'd' THEN 'DD' 
-          WHEN n = 'e' THEN 'FMDD' 
-          WHEN n = 'f' THEN 'US' 
-          WHEN n = 'H' THEN 'HH24' 
-          WHEN n = 'h' THEN 'HH12' 
-          WHEN n = 'I' THEN 'HH12'      
-          WHEN n = 'i' THEN 'MI' 
-          WHEN n = 'j' THEN 'DDD' 
-          WHEN n = 'k' THEN 'FMHH24' 
-          WHEN n = 'l' THEN 'FMHH12' 
-          WHEN n = 'M' THEN 'FMMonth' 
-          WHEN n = 'm' THEN 'MM' 
-          WHEN n = 'p' THEN 'AM' 
-          WHEN n = 'r' THEN 'HH12:MI:SS AM' 
+          WHEN n = 'a' THEN 'Dy'
+          WHEN n = 'b' THEN 'Mon'
+          WHEN n = 'c' THEN 'FMMM'
+          WHEN n = 'D' THEN 'FMDDth'
+          WHEN n = 'd' THEN 'DD'
+          WHEN n = 'e' THEN 'FMDD'
+          WHEN n = 'f' THEN 'US'
+          WHEN n = 'H' THEN 'HH24'
+          WHEN n = 'h' THEN 'HH12'
+          WHEN n = 'I' THEN 'HH12'
+          WHEN n = 'i' THEN 'MI'
+          WHEN n = 'j' THEN 'DDD'
+          WHEN n = 'k' THEN 'FMHH24'
+          WHEN n = 'l' THEN 'FMHH12'
+          WHEN n = 'M' THEN 'FMMonth'
+          WHEN n = 'm' THEN 'MM'
+          WHEN n = 'p' THEN 'AM'
+          WHEN n = 'r' THEN 'HH12:MI:SS AM'
           WHEN n = 'S' THEN 'SS'
           WHEN n = 's' THEN 'SS'
-          WHEN n = 'T' THEN 'HH24:MI:SS' 
+          WHEN n = 'T' THEN 'HH24:MI:SS'
           WHEN n = 'U' THEN '?'
           WHEN n = 'u' THEN '?'
           WHEN n = 'V' THEN '?'
           WHEN n = 'v' THEN '?'
-          WHEN n = 'W' THEN 'FMDay' 
+          WHEN n = 'W' THEN 'FMDay'
           WHEN n = 'w' THEN '?'
-          WHEN n = 'X' THEN '?' 
-          WHEN n = 'x' THEN '?' 
-          WHEN n = 'Y' THEN 'YYYY' 
+          WHEN n = 'X' THEN '?'
+          WHEN n = 'x' THEN '?'
+          WHEN n = 'Y' THEN 'YYYY'
           WHEN n = 'y' THEN 'YY'
           WHEN n = '%' THEN '%'
           ELSE NULL
@@ -881,7 +881,7 @@ CREATE FUNCTION "str_to_date"("text", "text") RETURNS timestamp without time zon
         -- Otherwise just append the character to the string
         temp = temp operator(pg_catalog.||) c;
         i := i + 1;
-      END IF; 
+      END IF;
     END LOOP;
     RETURN pg_catalog.to_timestamp($1, temp)::timestamp without time zone;
   END
@@ -988,25 +988,25 @@ CREATE FUNCTION "time_format"(interval, "text") RETURNS "text"
           WHEN n = 'D' THEN '0'
           WHEN n = 'd' THEN '0'
           WHEN n = 'e' THEN '0'
-          WHEN n = 'f' THEN pg_catalog.to_char($1, 'US') 
-          WHEN n = 'H' THEN pg_catalog.to_char($1, 'HH24') 
+          WHEN n = 'f' THEN pg_catalog.to_char($1, 'US')
+          WHEN n = 'H' THEN pg_catalog.to_char($1, 'HH24')
           WHEN n = 'h' THEN pg_catalog.lpad(pg_catalog.to_char($1, 'HH12')::integer % 12, 2, '0')
           WHEN n = 'I' THEN pg_catalog.lpad(pg_catalog.to_char($1, 'HH12')::integer % 12, 2, '0')
-          WHEN n = 'i' THEN pg_catalog.to_char($1, 'MI') 
+          WHEN n = 'i' THEN pg_catalog.to_char($1, 'MI')
           WHEN n = 'j' THEN '0'
-          WHEN n = 'k' THEN pg_catalog.to_char($1, 'FMHH24') 
+          WHEN n = 'k' THEN pg_catalog.to_char($1, 'FMHH24')
           WHEN n = 'l' THEN (pg_catalog.to_char($1, 'FMHH12')::integer % 12)::text
           WHEN n = 'M' THEN '0'
           WHEN n = 'm' THEN '0'
-          WHEN n = 'p' THEN pg_catalog.to_char($1, 'AM') 
-          WHEN n = 'r' THEN pg_catalog.lpad(pg_catalog.to_char($1, 'HH12')::integer % 12, 2, '0') 
-                              operator(pg_catalog.||) 
-                              pg_catalog.to_char($1, ':MI:SS ') 
-                              operator(pg_catalog.||) 
+          WHEN n = 'p' THEN pg_catalog.to_char($1, 'AM')
+          WHEN n = 'r' THEN pg_catalog.lpad(pg_catalog.to_char($1, 'HH12')::integer % 12, 2, '0')
+                              operator(pg_catalog.||)
+                              pg_catalog.to_char($1, ':MI:SS ')
+                              operator(pg_catalog.||)
                               CASE WHEN pg_catalog.to_char($1, 'FMHH24')::integer <= 11 THEN 'AM' ELSE 'PM' END
           WHEN n = 'S' THEN pg_catalog.to_char($1, 'SS')
           WHEN n = 's' THEN pg_catalog.to_char($1, 'SS')
-          WHEN n = 'T' THEN pg_catalog.to_char($1, 'HH24:MI:SS') 
+          WHEN n = 'T' THEN pg_catalog.to_char($1, 'HH24:MI:SS')
           WHEN n = 'U' THEN '0'
           WHEN n = 'u' THEN '0'
           WHEN n = 'V' THEN '0'
@@ -1026,7 +1026,7 @@ CREATE FUNCTION "time_format"(interval, "text") RETURNS "text"
         -- Otherwise just append the character to the string
         temp = temp operator(pg_catalog.||) c;
         i := i + 1;
-      END IF; 
+      END IF;
     END LOOP;
     RETURN temp;
   END
@@ -2195,7 +2195,7 @@ ALTER SEQUENCE "routes_id_seq" OWNED BY "routes"."id";
 --
 
 CREATE TABLE "sessions" (
-    "id" character(26) NOT NULL,
+    "id" character(32) NOT NULL,
     "user_id" bigint,
     "ip" character varying(40),
     "data" "text",
@@ -3995,7 +3995,7 @@ Tugas pokok ketua adalah :
 <li>Memimpin dan mengendalikan jalannya organisasi dengan berkoordinasi kepada penasihat.</li>
 <li>Mewakili Organisasi ke luar maupun ke dalam.</li>
 <li>Memimpin pelaksanaan program kerja organisasi.</li>
-<li>Menandatangani surat-surat penting organisasi.</li> 
+<li>Menandatangani surat-surat penting organisasi.</li>
 <li>Mengatasi dan bertanggung jawab terhadap segala permasalahan atas pelaksanaan tugas yang dijalankan oleh para pengurus.</li>
 <li>Mengadakan evaluasi terhadap semua kegiatan yang telah dilaksanakan oleh para pengurus.</li>
 <li>Melaporkan dan mempertanggungjawabkan tugas kepengurusan organisasi kepada Administrator dan Anggota.</li>
@@ -4070,7 +4070,7 @@ Pembubaran organisasi "Medan Bisser" dilakukan apabila tujuan organisasi tidak t
 PENUTUP</h4>
 
 <h5 class="bold-centered-block">Pasal 16</h5>
-Hal-hal yang belum diatur dalam Anggaran Rumah Tangga (ART) ini akan diatur melalui rapat anggota. 
+Hal-hal yang belum diatur dalam Anggaran Rumah Tangga (ART) ini akan diatur melalui rapat anggota.
 
 <h5 class="bold-centered-block">Pasal 17</h5>
 Anggaran Rumah Tangga (ART) organisasi "Medan Bisser" ini mulai berlaku sejak tanggal ditetapkan.
@@ -4128,7 +4128,7 @@ Tempat dan Kedudukan</h5>
 Pengurus organisasi "Medan Bisser" ini berkedudukan di kota Medan Provinsi Sumatera Utara dengan alamat sekretariat Jln. Sisingamangaraja Km 7 No. 48 Marendal, dan tidak dimungkinkan membuka korwil atau cabang di tempat lain.
 
 <h6 class="bold-centered-block">Ayat 2</h6>
-Organisasi "Medan Bisser" berada di bawah naungan Forum www.bismania.com (Forbiscom) dengan situs resmi : <a href="http://www.facebook.com/groups/medanbisser">www.facebook.com/groups/medanbisser</a> sebagai forum berdiskusi, dan 
+Organisasi "Medan Bisser" berada di bawah naungan Forum www.bismania.com (Forbiscom) dengan situs resmi : <a href="http://www.facebook.com/groups/medanbisser">www.facebook.com/groups/medanbisser</a> sebagai forum berdiskusi, dan
 <a href="http://www.medanbisser.com">www.medanbisser.com</a> sebagai database internal organisasi (daftar anggota, iuran/pengeluaran uang kas, absensi kopdar bulanan, data SP anggota & dokumen internal organisasi).
 
 <h5 class="bold-centered-block">Pasal 3<br>

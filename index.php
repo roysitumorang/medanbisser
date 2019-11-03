@@ -4,13 +4,13 @@ register_shutdown_function(function($server) {
 	ob_end_flush();
 	session_write_close();
 	$execution_time = (microtime(true) - $server['REQUEST_TIME_FLOAT']) * 1000;
-	SeasLog::setBasePath(__DIR__);
-	SeasLog::setLogger('log');
 	SeasLog::info(sprintf("%s | %s | processed in %s ms | memory usage %s MB", $server['REQUEST_METHOD'], $server['REQUEST_URI'], $execution_time, memory_get_peak_usage(true) / 1048576));
 }, $_SERVER);
 ob_start(function($buffer) {
 	return preg_replace(['/(\s)+/s', '/\>(\s)+/s', '/(\s)+\</s', '/(\s+)?=(\s+)?/s'], ['\\1', '>', '<', '='], $buffer);
 });
+SeasLog::setBasePath(__DIR__);
+SeasLog::setLogger('log');
 $db = new PDO('pgsql:dbname=medanbisser_erp', 'postgres', 'tR1adpass#', [
 	PDO::ATTR_ERRMODE          => PDO::ERRMODE_EXCEPTION,
 	PDO::ATTR_ORACLE_NULLS     => PDO::NULL_EMPTY_STRING,
@@ -35,12 +35,12 @@ $routes = unserialize($redis->get('routes'));
 require 'Role_Permissions.php';
 $_SESSION['role_permissions'] = unserialize($redis->get('role_permissions'))->get(ROLE);
 $route = null;
-foreach (['request_method', 'request_time', 'request_time_float', 'redirect_url'] as $item) {
+foreach (['request_method', 'request_time', 'request_time_float', 'request_uri'] as $item) {
 	$k     = strtoupper($item);
 	$$item = $_SERVER[$k];
 }
 foreach ($routes as $item) {
-	if ($request_method === $item->get('request_method') && preg_match($item->get('url'), $redirect_url, $param)) {
+	if ($request_method === $item->get('request_method') && preg_match($item->get('url'), $request_uri, $param)) {
 		$route = [
 			'controller' => $item->get('controller'),
 			'method'     => $item->get('method'),
