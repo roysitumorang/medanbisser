@@ -39,6 +39,7 @@ foreach (['request_method', 'request_time', 'request_time_float', 'request_uri']
 	$k     = strtoupper($item);
 	$$item = $_SERVER[$k];
 }
+$request_uri = strtr($request_uri, [sprintf('?%s', $_SERVER['QUERY_STRING']) => '']);
 foreach ($routes as $item) {
 	if ($request_method === $item->get('request_method') && preg_match($item->get('url'), $request_uri, $param)) {
 		$route = [
