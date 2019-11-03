@@ -1,11 +1,9 @@
 <?php
 
-use Ds\Map;
-
 class Users extends Application {
 	function __construct($db, $route) {
 		parent::__construct($db, $route);
-		!apcu_exists('users_order_fields') && apcu_add('users_order_fields', new Map(['Nama' => 'full_name', 'Umur' => 'age', 'Nomor ID' => 'id']));
+		!apcu_exists('users_order_fields') && apcu_add('users_order_fields', ['Nama' => 'full_name', 'Umur' => 'age', 'Nomor ID' => 'id']);
 		$this->_order_fields = apcu_fetch('users_order_fields');
 	}
 

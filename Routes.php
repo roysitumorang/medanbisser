@@ -1,199 +1,195 @@
 <?php
 
-use Ds\{Map, Vector};
-
-if (!$redis->exists('routes')) {
-	$routes = new Vector([
-		new Map([
-			'url'            => 'home',
-			'request_method' => 'GET',
-			'controller'     => 'Home',
-			'method'         => 'index',
-		]), new Map([
-			'url'            => 'search',
-			'request_method' => 'GET',
-			'controller'     => 'Home',
-			'method'         => 'search',
-		]), new Map([
-			'url'            => 'sessions\/new',
-			'request_method' => 'GET',
-			'controller'     => 'Sessions',
-			'method'         => 'new',
-		]), new Map([
-			'url'            => 'sessions\/create',
-			'request_method' => 'POST',
-			'controller'     => 'Sessions',
-			'method'         => 'create',
-		]), new Map([
-			'url'            => 'sessions\/destroy',
-			'request_method' => 'GET',
-			'controller'     => 'Sessions',
-			'method'         => 'destroy',
-		]), new Map([
-			'url'            => 'sessions\/mine',
-			'request_method' => 'GET',
-			'controller'     => 'Sessions',
-			'method'         => 'show',
-		]), new Map([
-			'url'            => 'sessions\/mine\/edit',
-			'request_method' => 'GET',
-			'controller'     => 'Sessions',
-			'method'         => 'edit',
-		]), new Map([
-			'url'            => 'sessions\/mine\/update',
-			'request_method' => 'POST',
-			'controller'     => 'Sessions',
-			'method'         => 'update',
-		]), new Map([
-			'url'            => '(?P<slug>\d{4}\/\d{2}\/\d{2}\/[a-z0-9-]+)',
-			'request_method' => 'GET',
-			'controller'     => 'Posts',
-			'method'         => 'show',
-		]), new Map([
-			'url'            => 'posts',
-			'request_method' => 'GET',
-			'controller'     => 'Posts',
-			'method'         => 'index',
-		]), new Map([
-			'url'            => 'posts\/(?P<id>\d+)',
-			'request_method' => 'POST',
-			'controller'     => 'Posts',
-			'method'         => 'show',
-		]), new Map([
-			'url'            => 'posts\/new',
-			'request_method' => 'GET',
-			'controller'     => 'Posts',
-			'method'         => 'new',
-		]), new Map([
-			'url'            => 'posts\/create',
-			'request_method' => 'POST',
-			'controller'     => 'Posts',
-			'method'         => 'create',
-		]), new Map([
-			'url'            => 'posts\/(?P<id>\d+)\/edit',
-			'request_method' => 'GET',
-			'controller'     => 'Posts',
-			'method'         => 'edit',
-		]), new Map([
-			'url'            => 'posts\/(?P<id>\d+)\/update',
-			'request_method' => 'POST',
-			'controller'     => 'Posts',
-			'method'         => 'update',
-		]), new Map([
-			'url'            => 'posts\/(?P<id>\d+)\/destroy',
-			'request_method' => 'POST',
-			'controller'     => 'Posts',
-			'method'         => 'destroy',
-		]), new Map([
-			'url'            => 'users',
-			'request_method' => 'GET',
-			'controller'     => 'Users',
-			'method'         => 'index',
-		]), new Map([
-			'url'            => 'users\/new',
-			'request_method' => 'GET',
-			'controller'     => 'Users',
-			'method'         => 'new',
-		]), new Map([
-			'url'            => 'users\/create',
-			'request_method' => 'POST',
-			'controller'     => 'Users',
-			'method'         => 'create',
-		]), new Map([
-			'url'            => 'users\/(?P<id>\d+)',
-			'request_method' => 'GET',
-			'controller'     => 'Users',
-			'method'         => 'show',
-		]), new Map([
-			'url'            => 'users\/(?P<id>\d+)\/edit',
-			'request_method' => 'GET',
-			'controller'     => 'Users',
-			'method'         => 'edit',
-		]), new Map([
-			'url'            => 'users\/(?P<id>\d+)\/update',
-			'request_method' => 'POST',
-			'controller'     => 'Users',
-			'method'         => 'update',
-		]), new Map([
-			'url'            => 'users\/(?P<id>\d+)\/destroy',
-			'request_method' => 'POST',
-			'controller'     => 'Users',
-			'method'         => 'destroy',
-		]), new Map([
-			'url'            => 'monthly-cashes',
-			'request_method' => 'GET',
-			'controller'     => 'Monthly_Cashes',
-			'method'         => 'index',
-		]), new Map([
-			'url'            => 'monthly-cashes\/new',
-			'request_method' => 'GET',
-			'controller'     => 'Monthly_Cashes',
-			'method'         => 'new',
-		]), new Map([
-			'url'            => 'monthly-cashes\/create',
-			'request_method' => 'POST',
-			'controller'     => 'Monthly_Cashes',
-			'method'         => 'create',
-		]), new Map([
-			'url'            => 'meetups',
-			'request_method' => 'GET',
-			'controller'     => 'Meetups',
-			'method'         => 'index',
-		]), new Map([
-			'url'            => 'meetups\/new',
-			'request_method' => 'GET',
-			'controller'     => 'Meetups',
-			'method'         => 'new',
-		]), new Map([
-			'url'            => 'meetups\/create',
-			'request_method' => 'POST',
-			'controller'     => 'Meetups',
-			'method'         => 'create',
-		]), new Map([
-			'url'            => 'expenses',
-			'request_method' => 'GET',
-			'controller'     => 'Expenses',
-			'method'         => 'index',
-		]), new Map([
-			'url'            => 'expenses\/new',
-			'request_method' => 'GET',
-			'controller'     => 'Expenses',
-			'method'         => 'new',
-		]), new Map([
-			'url'            => 'expenses\/create',
-			'request_method' => 'POST',
-			'controller'     => 'Expenses',
-			'method'         => 'create',
-		]), new Map([
-			'url'            => 'expenses\/(?P<id>\d+)',
-			'request_method' => 'GET',
-			'controller'     => 'Expenses',
-			'method'         => 'show',
-		]), new Map([
-			'url'            => 'expenses\/(?P<id>\d+)\/edit',
-			'request_method' => 'GET',
-			'controller'     => 'Expenses',
-			'method'         => 'edit',
-		]), new Map([
-			'url'            => 'expenses\/(?P<id>\d+)\/update',
-			'request_method' => 'POST',
-			'controller'     => 'Expenses',
-			'method'         => 'update',
-		]), new Map([
-			'url'            => 'expenses\/(?P<id>\d+)\/destroy',
-			'request_method' => 'POST',
-			'controller'     => 'Expenses',
-			'method'         => 'destroy',
-		]), new Map([
-			'url'            => '(?P<alias>[a-z0-9-]+)',
-			'request_method' => 'GET',
-			'controller'     => 'Posts',
-			'method'         => 'show',
-		]),
-	]);
-	foreach ($routes as $i => $route) {
-		$route->put('url', '/^\/(?P<locale>en_US|id_ID)\/' . $route->get('url') . '(\/)?$/');
-		$routes->set($i, $route);
-	}
-	$redis->set('routes', serialize($routes));
+$routes = [
+	[
+		'url'            => 'home',
+		'request_method' => 'GET',
+		'controller'     => 'Home',
+		'method'         => 'index',
+	], [
+		'url'            => 'search',
+		'request_method' => 'GET',
+		'controller'     => 'Home',
+		'method'         => 'search',
+	], [
+		'url'            => 'sessions\/new',
+		'request_method' => 'GET',
+		'controller'     => 'Sessions',
+		'method'         => 'new',
+	], [
+		'url'            => 'sessions\/create',
+		'request_method' => 'POST',
+		'controller'     => 'Sessions',
+		'method'         => 'create',
+	], [
+		'url'            => 'sessions\/destroy',
+		'request_method' => 'GET',
+		'controller'     => 'Sessions',
+		'method'         => 'destroy',
+	], [
+		'url'            => 'sessions\/mine',
+		'request_method' => 'GET',
+		'controller'     => 'Sessions',
+		'method'         => 'show',
+	], [
+		'url'            => 'sessions\/mine\/edit',
+		'request_method' => 'GET',
+		'controller'     => 'Sessions',
+		'method'         => 'edit',
+	], [
+		'url'            => 'sessions\/mine\/update',
+		'request_method' => 'POST',
+		'controller'     => 'Sessions',
+		'method'         => 'update',
+	], [
+		'url'            => '(?P<slug>\d{4}\/\d{2}\/\d{2}\/[a-z0-9-]+)',
+		'request_method' => 'GET',
+		'controller'     => 'Posts',
+		'method'         => 'show',
+	], [
+		'url'            => 'posts',
+		'request_method' => 'GET',
+		'controller'     => 'Posts',
+		'method'         => 'index',
+	], [
+		'url'            => 'posts\/(?P<id>\d+)',
+		'request_method' => 'POST',
+		'controller'     => 'Posts',
+		'method'         => 'show',
+	], [
+		'url'            => 'posts\/new',
+		'request_method' => 'GET',
+		'controller'     => 'Posts',
+		'method'         => 'new',
+	], [
+		'url'            => 'posts\/create',
+		'request_method' => 'POST',
+		'controller'     => 'Posts',
+		'method'         => 'create',
+	], [
+		'url'            => 'posts\/(?P<id>\d+)\/edit',
+		'request_method' => 'GET',
+		'controller'     => 'Posts',
+		'method'         => 'edit',
+	], [
+		'url'            => 'posts\/(?P<id>\d+)\/update',
+		'request_method' => 'POST',
+		'controller'     => 'Posts',
+		'method'         => 'update',
+	], [
+		'url'            => 'posts\/(?P<id>\d+)\/destroy',
+		'request_method' => 'POST',
+		'controller'     => 'Posts',
+		'method'         => 'destroy',
+	], [
+		'url'            => 'users',
+		'request_method' => 'GET',
+		'controller'     => 'Users',
+		'method'         => 'index',
+	], [
+		'url'            => 'users\/new',
+		'request_method' => 'GET',
+		'controller'     => 'Users',
+		'method'         => 'new',
+	], [
+		'url'            => 'users\/create',
+		'request_method' => 'POST',
+		'controller'     => 'Users',
+		'method'         => 'create',
+	], [
+		'url'            => 'users\/(?P<id>\d+)',
+		'request_method' => 'GET',
+		'controller'     => 'Users',
+		'method'         => 'show',
+	], [
+		'url'            => 'users\/(?P<id>\d+)\/edit',
+		'request_method' => 'GET',
+		'controller'     => 'Users',
+		'method'         => 'edit',
+	], [
+		'url'            => 'users\/(?P<id>\d+)\/update',
+		'request_method' => 'POST',
+		'controller'     => 'Users',
+		'method'         => 'update',
+	], [
+		'url'            => 'users\/(?P<id>\d+)\/destroy',
+		'request_method' => 'POST',
+		'controller'     => 'Users',
+		'method'         => 'destroy',
+	], [
+		'url'            => 'monthly-cashes',
+		'request_method' => 'GET',
+		'controller'     => 'Monthly_Cashes',
+		'method'         => 'index',
+	], [
+		'url'            => 'monthly-cashes\/new',
+		'request_method' => 'GET',
+		'controller'     => 'Monthly_Cashes',
+		'method'         => 'new',
+	], [
+		'url'            => 'monthly-cashes\/create',
+		'request_method' => 'POST',
+		'controller'     => 'Monthly_Cashes',
+		'method'         => 'create',
+	], [
+		'url'            => 'meetups',
+		'request_method' => 'GET',
+		'controller'     => 'Meetups',
+		'method'         => 'index',
+	], [
+		'url'            => 'meetups\/new',
+		'request_method' => 'GET',
+		'controller'     => 'Meetups',
+		'method'         => 'new',
+	], [
+		'url'            => 'meetups\/create',
+		'request_method' => 'POST',
+		'controller'     => 'Meetups',
+		'method'         => 'create',
+	], [
+		'url'            => 'expenses',
+		'request_method' => 'GET',
+		'controller'     => 'Expenses',
+		'method'         => 'index',
+	], [
+		'url'            => 'expenses\/new',
+		'request_method' => 'GET',
+		'controller'     => 'Expenses',
+		'method'         => 'new',
+	], [
+		'url'            => 'expenses\/create',
+		'request_method' => 'POST',
+		'controller'     => 'Expenses',
+		'method'         => 'create',
+	], [
+		'url'            => 'expenses\/(?P<id>\d+)',
+		'request_method' => 'GET',
+		'controller'     => 'Expenses',
+		'method'         => 'show',
+	], [
+		'url'            => 'expenses\/(?P<id>\d+)\/edit',
+		'request_method' => 'GET',
+		'controller'     => 'Expenses',
+		'method'         => 'edit',
+	], [
+		'url'            => 'expenses\/(?P<id>\d+)\/update',
+		'request_method' => 'POST',
+		'controller'     => 'Expenses',
+		'method'         => 'update',
+	], [
+		'url'            => 'expenses\/(?P<id>\d+)\/destroy',
+		'request_method' => 'POST',
+		'controller'     => 'Expenses',
+		'method'         => 'destroy',
+	], [
+		'url'            => '(?P<alias>[a-z0-9-]+)',
+		'request_method' => 'GET',
+		'controller'     => 'Posts',
+		'method'         => 'show',
+	],
+];
+foreach ($routes as $i => $route) {
+	$route['url'] = '/^\/(?P<locale>en_US|id_ID)\/' . $route['url'] . '(\/)?$/';
+	$routes[$i] = $route;
 }
+return $routes;

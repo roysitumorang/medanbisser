@@ -1,13 +1,11 @@
 <?php
 
-use Ds\Map;
-
 class Monthly_Cashes extends Application {
 	protected $_current_year;
 
 	function __construct($db, $route) {
 		parent::__construct($db, $route);
-		!apcu_exists('monthly_cashes_order_fields') && apcu_add('monthly_cashes_order_fields', new Map(['Nama' => 'full_name', 'Nomor ID' => 'id']));
+		!apcu_exists('monthly_cashes_order_fields') && apcu_add('monthly_cashes_order_fields', ['Nama' => 'full_name', 'Nomor ID' => 'id']);
 		$this->_order_fields = apcu_fetch('monthly_cashes_order_fields');
 		$this->_current_year = $this->_now->format('Y');
 	}

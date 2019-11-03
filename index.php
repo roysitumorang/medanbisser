@@ -3,22 +3,16 @@
 register_shutdown_function(function($server) {
 	ob_end_flush();
 	session_write_close();
-	$execution_time = (microtime(true) - $server['REQUEST_TIME_FLOAT']) * 1000;
-	SeasLog::info(sprintf("%s | %s | processed in %s ms | memory usage %s MB", $server['REQUEST_METHOD'], $server['REQUEST_URI'], $execution_time, memory_get_peak_usage(true) / 1048576));
 }, $_SERVER);
 ob_start(function($buffer) {
 	return preg_replace(['/(\s)+/s', '/\>(\s)+/s', '/(\s)+\</s', '/(\s+)?=(\s+)?/s'], ['\\1', '>', '<', '='], $buffer);
 });
-SeasLog::setBasePath(__DIR__);
-SeasLog::setLogger('log');
 $db = new PDO('pgsql:dbname=medanbisser_erp', 'postgres', 'tR1adpass#', [
 	PDO::ATTR_ERRMODE          => PDO::ERRMODE_EXCEPTION,
 	PDO::ATTR_ORACLE_NULLS     => PDO::NULL_EMPTY_STRING,
 	PDO::ATTR_PERSISTENT       => 1,
 	PDO::ATTR_EMULATE_PREPARES => 0,
 ]);
-$redis = new Redis;
-$redis->pconnect('127.0.0.1');
 require 'Session.php';
 new Session($db);
 session_start();
@@ -30,10 +24,8 @@ if (!in_array($locale, $locales)) {
 }
 define('ROLE', $_SESSION['user_id'] ? $db->query("SELECT r.name FROM users u JOIN roles r ON u.role_id = r.id WHERE u.id = {$_SESSION['user_id']}")->fetchColumn() : 'Anonymous');
 require 'Utilities.php';
-require 'Routes.php';
-$routes = unserialize($redis->get('routes'));
-require 'Role_Permissions.php';
-$_SESSION['role_permissions'] = unserialize($redis->get('role_permissions'))->get(ROLE);
+$routes = require 'Routes.php';
+$_SESSION['role_permissions'] = (require 'Role_Permissions.php')[ROLE];
 $route = null;
 foreach (['request_method', 'request_time', 'request_time_float', 'request_uri'] as $item) {
 	$k     = strtoupper($item);
@@ -41,10 +33,10 @@ foreach (['request_method', 'request_time', 'request_time_float', 'request_uri']
 }
 $request_uri = strtr($request_uri, [sprintf('?%s', $_SERVER['QUERY_STRING']) => '']);
 foreach ($routes as $item) {
-	if ($request_method === $item->get('request_method') && preg_match($item->get('url'), $request_uri, $param)) {
+	if ($request_method === $item['request_method'] && preg_match($item['url'], $request_uri, $param)) {
 		$route = [
-			'controller' => $item->get('controller'),
-			'method'     => $item->get('method'),
+			'controller' => $item['controller'],
+			'method'     => $item['method'],
 			'param'      => $param
 		];
 		break;
@@ -65,7 +57,7 @@ setlocale(LC_ALL, $locale . '.utf8');
 bindtextdomain($locale, dirname(__FILE__) . '/locales');
 bind_textdomain_codeset($domain, 'UTF-8');
 textdomain($locale);
-if (!$_SESSION['role_permissions']->hasKey($route['controller']) || !$_SESSION['role_permissions']->get($route['controller'])->contains($route['method'])) {
+if (!array_key_exists($route['controller'], $_SESSION['role_permissions']) || !in_array($route['method'], $_SESSION['role_permissions'][$route['controller']])) {
 	$route = [
 		'controller' => 'Posts',
 		'method'     => 'show',
@@ -100,7 +92,5 @@ foreach (['error_messages', 'alert'] as $k) {
 		unset($_SESSION[$k]);
 	}
 }
-if (!$redis->exists('template')) {
-	$redis->set('template', file_get_contents('template.html'));
-}
-echo sprintf($redis->get('template'), $main_menu, $login_menu, $content, $javascript ? sprintf('<script>%s</script>', $javascript) : '');
+$template = file_get_contents('template.html');
+echo sprintf($template, $main_menu, $login_menu, $content, $javascript ? sprintf('<script>%s</script>', $javascript) : '');

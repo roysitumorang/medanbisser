@@ -1,11 +1,9 @@
 <?php
 
-use Ds\Map;
-
 class Expenses extends Application {
 	function __construct($db, $route) {
 		parent::__construct($db, $route);
-		!apcu_exists('expenses_order_fields') && apcu_add('expenses_order_fields', new Map(['Tanggal' => 'dot DESC']));
+		!apcu_exists('expenses_order_fields') && apcu_add('expenses_order_fields', ['Tanggal' => 'dot DESC']);
 		$this->_order_fields = apcu_fetch('expenses_order_fields');
 	}
 

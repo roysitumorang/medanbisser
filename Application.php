@@ -1,7 +1,5 @@
 <?php
 
-use Ds\{Map, Vector};
-
 abstract class Application {
 	protected $_db, $_controller, $_method, $_param, $_content = '', $_pagination = '', $_query, $_module, $_error_messages = [], $_alert = [], $_limits, $_limit, $_page, $_offset, $_order_fields, $_order_by = '', $_rows, $_javascript = '', $_select_period_options, $_now, $_date_formatter, $_datetime_formatter, $_period_formatter, $_periods, $_locale;
 
@@ -11,7 +9,7 @@ abstract class Application {
 		$this->_method     = $route['method'] ?: 'index';
 		$this->_param      = $route['param'];
 		if (!apcu_exists('limits')) {
-			$this->_limits = new Vector([10, 25, 50, 100]);
+			$this->_limits = [10, 25, 50, 100];
 			apcu_add('limits', $this->_limits);
 		}
 		$this->_limits         = apcu_fetch('limits');
@@ -22,19 +20,19 @@ abstract class Application {
 			$this->{"_$k"} = new IntlDateFormatter('id_ID', IntlDateFormatter::LONG, IntlDateFormatter::NONE, 'UTC', IntlDateFormatter::GREGORIAN, $v);
 		}
 		if (!apcu_exists('select_period_options')) {
-			$this->_select_period_options = new Map(['' => '&raquo;']);
+			$this->_select_period_options = ['' => '&raquo;'];
 			foreach (new DatePeriod(new DateTime('2013-01-01'), new DateInterval('P1M'), $this->_now) as $date) {
-				$this->_select_period_options->put($date->format('Ym'), $this->_period_formatter->format($date));
+				$this->_select_period_options[$date->format('Ym')] = $this->_period_formatter->format($date);
 			}
 			apcu_add('select_period_options', $this->_select_period_options);
 		}
 		$this->_select_period_options = apcu_fetch('select_period_options');
 		if (!apcu_exists('periods')) {
-			$this->_periods = new Map;
+			$this->_periods = [];
 			$now            = clone $this->_now;
 			$now->setDate($now->format('Y') - 1, 1, 1);
 			foreach (new DatePeriod($now, new DateInterval('P1M'), $this->_now) as $date) {
-				$this->_periods->put($date->format('Ym'), $this->_month_formatter->format($date));
+				$this->_periods[$date->format('Ym')] = $this->_month_formatter->format($date);
 			}
 			apcu_add('periods', $this->_periods);
 		}
@@ -47,15 +45,15 @@ abstract class Application {
 		$stmt = $this->_db->prepare("SELECT r.query FROM modules m JOIN routes r ON m.id = r.module_id WHERE m.name = ? AND r.module_method = 'index'");
 		$stmt->execute([get_class($this)]);
 		$this->_query = $stmt->fetchColumn();
-		if (isset($get['order_by']) && $this->_order_fields->hasKey($get['order_by'])) {
-			$this->_order_by = $this->_order_fields->get($get['order_by']);
+		if (isset($get['order_by']) && in_array($get['order_by'], $this->_order_fields)) {
+			$this->_order_by = $this->_order_fields[$get['order_by']];
 			return;
 		}
-		$this->_order_by = $this->_order_fields->first()->value;
+		$this->_order_by = $this->_order_fields[array_key_first($this->_order_fields)];
 	}
 
 	protected function _paginate($get, $form_action, $params = [], $fields = '') {
-		$this->_limit  = $this->_limits->get($get['limit'] ?: 0);
+		$this->_limit  = $this->_limits[$get['limit'] ?: 0];
 		$this->_page   = $get['page'] && $get['page'] > 0 ? $get['page'] : 1;
 		$this->_offset = ($this->_page - 1) * $this->_limit;
 		$stmt          = $this->_db->prepare(strtr($this->_query, ['*' => 'COUNT(1)']));
@@ -66,16 +64,16 @@ abstract class Application {
 		$stmt = $this->_db->prepare($this->_query . " ORDER BY $this->_order_by LIMIT $this->_limit OFFSET $this->_offset");
 		$stmt->execute($params);
 		$total_rows_limited = $stmt->rowCount();
-		$this->_rows        = new Vector;
+		$this->_rows        = [];
 		while ($row = $stmt->fetchObject()) {
-			$this->_rows->push($row);
+			$this->_rows[] = $row;
 		}
 
 		$this->_pagination .= '<form method="GET" action="' . $form_action . '" class="navbar-form navbar-right">';
 		$get['q'] && $this->_pagination .= '<input type="hidden" name="q" value="' . $get['q'] . '">';
 		$this->_pagination .= "<i class=\"fa fa-sort-alpha-asc\">&nbsp;</i>&nbsp;<strong>" . _('Sort by') . "&nbsp;:&nbsp;</strong>&nbsp;<select class=\"form-control\" name=\"order_by\" onchange=\"this.closest('form').submit()\">";
-		foreach ($this->_order_fields->pairs() as $item) {
-			$this->_pagination .= '<option value="' . $item->key . '"' . ($item->value == $this->_order_by ? ' selected' : '') . '>' . $item->key . '</option>';
+		foreach ($this->_order_fields as $key => $value) {
+			$this->_pagination .= '<option value="' . $key . '"' . ($value == $this->_order_by ? ' selected' : '') . '>' . $key . '</option>';
 		}
 		$this->_pagination .= "</select><strong>&nbsp;,&nbsp;<i class=\"fa fa-sort-amount-asc\">&nbsp;</i>&nbsp;" . _('Size per page') . "&nbsp;:&nbsp;</strong>&nbsp;<select class=\"form-control\" name=\"limit\" onchange=\"$(this).closest('form').submit()\">";
 		foreach ($this->_limits as $k => $v) {
@@ -91,7 +89,7 @@ abstract class Application {
 			$this->_pagination .= '<strong>&nbsp;' . sprintf(_('of %d pages'), $total_pages) . '</strong>';
 		}
 		$this->_pagination .= "</form>";
-		$this->_javascript  = jsmin(<<<CONTENT
+		$this->_javascript  = <<<CONTENT
 			document.querySelectorAll("a[data-page]").forEach(element => {
 				element.onclick = event => {
 					let parent = event.target.parentNode, input = document.createElement('input');
@@ -103,8 +101,7 @@ abstract class Application {
 					parent.submit()
 				}
 			})
-CONTENT
-		);
+CONTENT;
 	}
 
 	function get_content() { return $this->_content; }
@@ -189,6 +186,6 @@ CONTENT
 	}
 
 	protected function _allowed_to_access_link($controller, $method = 'index') {
-		return $_SESSION['role_permissions']->get($controller)->contains($method);
+		return in_array($method, $_SESSION['role_permissions'][$controller]);
 	}
 }

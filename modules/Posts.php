@@ -1,11 +1,9 @@
 <?php
 
-use Ds\Map;
-
 class Posts extends Application {
 	function __construct($db, $route) {
 		parent::__construct($db, $route);
-		!apcu_exists('posts_order_fields') && apcu_add('posts_order_fields', new Map(['Tanggal' => 'id DESC']));
+		!apcu_exists('posts_order_fields') && apcu_add('posts_order_fields', ['Tanggal' => 'id DESC']);
 		$this->_order_fields = apcu_fetch('posts_order_fields');
 	}
 

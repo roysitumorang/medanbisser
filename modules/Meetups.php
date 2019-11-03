@@ -1,13 +1,11 @@
 <?php
 
-use Ds\Map;
-
 class Meetups extends Application {
 	protected $_current_year, $_current_period;
 
 	function __construct($db, $route) {
 		parent::__construct($db, $route);
-		!apcu_exists('meetups_order_fields') && apcu_add('meetups_order_fields', new Map(['Nama' => 'full_name', 'Nomor ID' => 'id']));
+		!apcu_exists('meetups_order_fields') && apcu_add('meetups_order_fields', ['Nama' => 'full_name', 'Nomor ID' => 'id']);
 		$this->_order_fields = apcu_fetch('meetups_order_fields');
 		$this->_current_year = $this->_now->format('Y');
 		$this->_current_period = $this->_now->format('Ym');
