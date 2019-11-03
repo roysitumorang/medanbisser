@@ -11,7 +11,7 @@ class Utilities {
 		return bin2hex(random_bytes(16));
 	}
 
-	static function encrypt_password($password) { return password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]); }
+	static function encrypt_password($password) { return password_hash($password, PASSWORD_ARGON2ID); }
 	static function var_dump($variable) { ob_end_clean(); echo '<pre>', var_dump($variable); exit; }
 
 	static function slugify($text) {

@@ -1590,7 +1590,7 @@ ALTER SEQUENCE "mv_cashes_id_seq" OWNED BY "mv_cashes"."id";
 
 CREATE TABLE "users" (
     "id" bigint NOT NULL,
-    "hash" character(60),
+    "hash" character(97),
     "question" character varying(40),
     "answer" character varying(40),
     "last_login" timestamp without time zone,
