@@ -154,7 +154,7 @@ CONTENT;
 	}
 
 	protected function _db_update($table, $data = []) {
-		$skipped_fields = new Vector(['id', 'created_by', 'created_ip', 'created_at']);
+		$skipped_fields = ['id', 'created_by', 'created_ip', 'created_at'];
 		$data['modified_by'] = $_SESSION['user_id'];
 		$data['modified_ip'] = Utilities::get_real_ip_address();
 		$data['modified_at'] = $this->_now->format('Y-m-d H:i:s');
@@ -164,7 +164,7 @@ CONTENT;
 		$k = 0;
 		foreach (range(0, $result->columnCount() - 1) as $i) {
 			$field = $result->getColumnMeta($i);
-			if ($skipped_fields->contains($field['name']) || !isset($data[$field['name']])) continue;
+			if (in_array($field['name'], $skipped_fields) || !isset($data[$field['name']])) continue;
 			$query .= ($k++ ? ',' : '') . sprintf(' "%s" = ?', $field['name']);
 			$params[] = $data[$field['name']] ?: null;
 		}
