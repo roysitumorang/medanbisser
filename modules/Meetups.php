@@ -5,8 +5,7 @@ class Meetups extends Application {
 
 	function __construct($db, $route) {
 		parent::__construct($db, $route);
-		!apcu_exists('meetups_order_fields') && apcu_add('meetups_order_fields', ['Nama' => 'full_name', 'Nomor ID' => 'id']);
-		$this->_order_fields = apcu_fetch('meetups_order_fields');
+		$this->_order_fields = $this->_cached('meetups_order_fields', fn() => ['Nama' => 'full_name', 'Nomor ID' => 'id']);
 		$this->_current_year = $this->_now->format('Y');
 		$this->_current_period = $this->_now->format('Ym');
 	}
@@ -23,7 +22,7 @@ class Meetups extends Application {
 		$this->_content .= '
 			<h2 class="navbar-form navbar-left"><i class="fa fa-calendar">&nbsp;</i> ' . ngettext('Meetup', 'Meetups', 2) . '</h2>
 			<form method="GET" action="' . Utilities::link_to('meetups') . '" class="navbar-form navbar-right" role="' . _('Search') . '" onsubmit="(\'' . _('Search') . '\'==$(\'[name=q]\').val())&amp;&amp;$(\'[name=q]\').val(\'\')">
-				<input type="text" name="q" value="' . $get['q'] . '" class="form-control" placeholder="' . _('Search') . '">
+				<input type="text" name="q" value="' . htmlspecialchars($get['q'] ?? '') . '" class="form-control" placeholder="' . _('Search') . '">
 				<button type="submit" class="btn btn-default"><i class="fa fa-search">&nbsp;</i> ' . _('Search') . '</button>';
 
 		$this->_content .= $this->_allowed_to_access_link('Meetups', 'edit') ? '<a type="button" href="/meetups/edit" class="btn btn-default"><i class="fa fa-edit">&nbsp;</i> ' . _('Edit') . '</a>' : '';
@@ -55,7 +54,7 @@ class Meetups extends Application {
 				<tbody>';
 
 		foreach ($this->_rows as $row) {
-			$id = str_repeat('0', 3 - strlen($row->id)) . $row->id;
+			$id = Utilities::pad_id($row->id);
 			$this->_content .=
 					"<tr>
 						<td class=\"text-center\">$id</td>
@@ -78,13 +77,13 @@ CONTENT;
 
 	function save($get, $post, $files) {
 		//$this->_validate($post, $files);
-		$users = SplFixedArray::fromArray($post['user_id'] ?: []);
+		$users = SplFixedArray::fromArray($post['user_id'] ?? []);
 		$months = new SplFixedArray(12);
 		foreach (range(1, 12) as $i) {
 			$months->offsetSet($i - 1, $i < 10 ? "0{$i}" : "$i");
 		}
 		$stmt = $this->_db->prepare('WITH upsert AS (UPDATE mv_meetups SET "01" = :01, "02" = :02, "03" = :03, "04" = :04, "05" = :05, "06" = :06, "07" = :07, "08" = :08, "09" = :09, "10" = :10, "11" = :11, "12" = :12, modified_by = :by, modified_ip = :ip, modified_at = :at WHERE user_id = :user_id AND year_id = :year_id RETURNING 1) INSERT INTO mv_meetups (user_id, year_id, "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", created_by, created_ip, created_at) SELECT :user_id, :year_id, :01, :02, :03, :04, :05, :06, :07, :08, :09, :10, :11, :12, :by, :ip, :at WHERE NOT EXISTS(SELECT 1 FROM upsert)');
-		$params = [[':by', $_SESSION['user_id']]
+		$params = [[':by', $_SESSION['user_id'] ?? null]
 			, [':ip', Utilities::get_real_ip_address()]
 			, [':at', $this->_now->format('Y-m-d H:i:s')]];
 		foreach ($params as $param) {
@@ -92,17 +91,17 @@ CONTENT;
 		}
 		foreach ($this->_db->query('SELECT u.id, u.full_name, u.join, m.prev_01, m.prev_02, m.prev_03, m.prev_04, m.prev_05, m.prev_06, m.prev_07, m.prev_08, m.prev_09, m.prev_10, m.prev_11, m.prev_12, m.cur_01, m.cur_02, m.cur_03, m.cur_04, m.cur_05, m.cur_06, m.cur_07, m.cur_08, m.cur_09, m.cur_10, m.cur_11, m.cur_12 FROM mv_users u LEFT JOIN mv_last_two_years_meetups m USING(id) WHERE u.resign IS NULL ORDER BY u.full_name') as $row) {
 			$users->offsetExists($row['id'])
-			&& !$this->_db->query("SELECT COUNT(*) FROM meetups WHERE user_id = {$row['id']} AND period_id = $this->_current_period")->fetchColumn()
+			&& !$this->_scalar('SELECT COUNT(*) FROM meetups WHERE user_id = ? AND period_id = ?', [$row['id'], $this->_current_period])
 			&& parent::_db_insert('meetups', ['user_id' => $row['id'], 'period_id' => $this->_current_period]);
 			$stmt->bindValue(':user_id', $row['id']);
-			foreach (range(substr($row['join'], 0, 4), $this->_current_year) as $year) {
+			foreach (range((int) substr((string) $row['join'], 0, 4), (int) $this->_current_year) as $year) {
 				$stmt->bindValue(':year_id', $year);
 				$months->rewind();
 				while ($months->valid()) {
 					$period = $year . $months->current();
 					$stmt->bindValue(
 						':' . $months->current()
-						, $users->offsetExists($row['id']) || $this->_db->query("SELECT COUNT(*) FROM meetups WHERE user_id = {$row['id']} AND period_id = $year")->fetchColumn()
+						, $users->offsetExists($row['id']) || $this->_scalar('SELECT COUNT(*) FROM meetups WHERE user_id = ? AND period_id = ?', [$row['id'], $period])
 						? '&#x2713;'
 						: 'x'
 					);
@@ -146,7 +145,7 @@ CONTENT;
 				<tbody>';
 
 		foreach ($this->_db->query('SELECT u.id, u.full_name, m.prev_01, m.prev_02, m.prev_03, m.prev_04, m.prev_05, m.prev_06, m.prev_07, m.prev_08, m.prev_09, m.prev_10, m.prev_11, m.prev_12, m.cur_01, m.cur_02, m.cur_03, m.cur_04, m.cur_05, m.cur_06, m.cur_07, m.cur_08, m.cur_09, m.cur_10, m.cur_11, m.cur_12 FROM mv_users u LEFT JOIN mv_last_two_years_meetups m USING(id) WHERE u.resign IS NULL ORDER BY u.full_name') as $row) {
-			$id = str_repeat('0', 3 - strlen($row['id'])) . $row['id'];
+			$id = Utilities::pad_id($row['id']);
 			$this->_content .= "
 					<tr>
 						<td class=\"text-center\">$id</td>

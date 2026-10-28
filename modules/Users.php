@@ -3,8 +3,7 @@
 class Users extends Application {
 	function __construct($db, $route) {
 		parent::__construct($db, $route);
-		!apcu_exists('users_order_fields') && apcu_add('users_order_fields', ['Nama' => 'full_name', 'Umur' => 'age', 'Nomor ID' => 'id']);
-		$this->_order_fields = apcu_fetch('users_order_fields');
+		$this->_order_fields = $this->_cached('users_order_fields', fn() => ['Nama' => 'full_name', 'Umur' => 'age', 'Nomor ID' => 'id']);
 	}
 
 	function index($get, $post, $files) {
@@ -20,7 +19,7 @@ class Users extends Application {
 		$this->_content .=
 			"<h2 class=\"navbar-form navbar-left\"><i class=\"fa fa-group\">&nbsp;</i> " . ngettext('User', 'Users', 2) . "</h2>
 			<form method=\"GET\" action=\"" . Utilities::link_to('users') . "\" class=\"navbar-form navbar-right\" role=\"search\" onsubmit=\"('" . _('ID / Name') . "'==$('[name=q]').val())&amp;&amp;$('[name=q]').val('')\">
-				<input type=\"text\" name=\"q\" value=\"{$get['q']}\" class=\"form-control\" placeholder=\"" . _('ID / Name') . "\">
+				<input type=\"text\" name=\"q\" value=\"" . htmlspecialchars($get['q'] ?? '') . "\" class=\"form-control\" placeholder=\"" . _('ID / Name') . "\">
 				<button type=\"submit\" class=\"btn btn-default\"><i class=\"fa fa-search\">&nbsp;</i> " . _('Search') . "</button>" .
 				($this->_allowed_to_access_link('Users', 'new') ? '<a type="button" href="' . Utilities::link_to('users/new') . '" class="btn btn-default"><i class="fa fa-user-plus">&nbsp;</i> ' . _('New') . '</a>' : '') .
 			"</form>
@@ -42,16 +41,16 @@ class Users extends Application {
 				<tbody>";
 
 		foreach ($this->_rows as $row) {
-			$id = str_repeat('0', 3 - strlen($row->id)) . $row->id;
+			$id = Utilities::pad_id($row->id);
 			$this->_content .= "
 					<tr>
 						<td class=\"text-center\">$id</td>
 						<td class=\"text-nowrap\">$row->full_name</td>
 						<td class=\"text-center\">$row->age</td>
-						<td class=\"text-right\">" . ($row->join ? $this->_period_formatter->format(new DateTime($row->join . '01')) : '') . "</td>
+						<td class=\"text-right\">" . $this->_format_period($row->join) . "</td>
 						<td class=\"text-center\">$row->years</td>
 						<td class=\"text-nowrap\">$row->status</td>
-						<td class=\"text-right text-nowrap\">" . ($row->debt ? sprintf(_('Debt') . ' ' . ngettext('%d Month', '%d Months', $row->months_of_debt) . ' ' . _('Since %s / %s'), $row->months_of_debt, $this->_period_formatter->format(DateTime::createFromFormat('Ym', $row->last_pay_period ?: $row->join)->modify('+1 month')), number_format($row->debt)) : ($row->paid ? _('Paid') . ' ' . _('up to') . ' ' . $this->_period_formatter->format(DateTime::createFromFormat('Ym', $row->last_pay_period)) . ' / ' . number_format($row->paid) : '')) . "</td>
+						<td class=\"text-right text-nowrap\">" . ($row->debt ? sprintf(_('Debt') . ' ' . ngettext('%d Month', '%d Months', $row->months_of_debt) . ' ' . _('Since %s / %s'), $row->months_of_debt, $this->_format_period($row->last_pay_period ?: $row->join, 1), number_format((float) $row->debt)) : ($row->paid ? _('Paid') . ' ' . _('up to') . ' ' . $this->_format_period($row->last_pay_period) . ' / ' . number_format((float) $row->paid) : '')) . "</td>
 						<td><img src=\"/images/photos/" . (file_exists("images/photos/$id-sm.jpg") ? $id : 'anonymous') . "-sm.jpg\"></td>
 						<td class=\"text-center\">
 							<a type=\"button\" href=\"" . Utilities::link_to("users/$row->id") . "\" class=\"btn btn-info\"><i class=\"fa fa-angle-double-right\">&nbsp;</i> " . _('Show') . "</a>
@@ -69,10 +68,10 @@ CONTENT;
 
 	function show($get, $post, $files) {
 		$user = $this->_prepare_data();
-		$id = str_repeat('0', 3 - strlen($user->id)) . $user->id;
+		$id = Utilities::pad_id($user->id);
 		$dob = $user->dob ? $this->_date_formatter->format(new DateTime($user->dob)) : '-';
-		$poj = $user->join ? $this->_period_formatter->format(new DateTime($user->join . '01')) : '-';
-		$pop = $user->permanent ? $this->_period_formatter->format(new DateTime($user->permanent . '01')) : '-';
+		$poj = $this->_format_period($user->join) ?: '-';
+		$pop = $this->_format_period($user->permanent) ?: '-';
 		$this->_content .=
 			$this->_get_form_notification() .
 			"<table class=\"table table-striped table-hover table-condensed\">
@@ -127,7 +126,7 @@ CONTENT;
 					</tr>
 					<tr>
 						<td class=\"text-right\">" . _('Cash Status') . "</td>
-						<td>" . ($user->debt ? _('Debt') . ' ' . sprintf(ngettext('%d Month', '%d Months', $user->months_of_debt), $user->months_of_debt) . ' ' . sprintf(_('Since %s / %s'), $this->_period_formatter->format(DateTime::createFromFormat('Ym', $user->last_pay_period ?: $user->join)->modify('+1 month')), number_format($user->debt)) : _('Paid') . ' ' . _('up to') . ' ' . $this->_date_formatter->format(DateTime::createFromFormat('Ym', $user->last_pay_period)) . ' / ' . number_format($user->paid)) . "</td>
+						<td>" . ($user->debt ? _('Debt') . ' ' . sprintf(ngettext('%d Month', '%d Months', $user->months_of_debt), $user->months_of_debt) . ' ' . sprintf(_('Since %s / %s'), $this->_format_period($user->last_pay_period ?: $user->join, 1), number_format((float) $user->debt)) : _('Paid') . ' ' . _('up to') . ' ' . $this->_format_period($user->last_pay_period) . ' / ' . number_format((float) $user->paid)) . "</td>
 					</tr>
 					<tr>
 						<td class=\"text-right\">" . ngettext('Role', 'Roles', 1) . "</td>
@@ -152,15 +151,15 @@ CONTENT;
 			$this->_form($get, $original_post, Utilities::link_to('users/create'));
 			return;
 		}
-		$post['password'] = Utilities::encrypt_password('Sementara1');
+		$post['hash'] = Utilities::encrypt_password('Sementara1');
 		krsort($post['dob']);
 		$post['dob'] = (new DateTime(implode('-', $post['dob'])))->format('Y-m-d');
 		$period = [];
-		$period['join'] = DateTime::createFromFormat('Ym', $post['join'])->format('Ym');
-		$period['permanent'] = !empty($post['permanent']) ? DateTime::createFromFormat('Ym', $post['permanent'])->format('Ym') : null;
-		$period['resign'] = !empty($post['resign']) ? DateTime::createFromFormat('Ym', $post['resign'])->format('Ym') : null;
+		$period['join'] = DateTime::createFromFormat('!Ym', $post['join'])->format('Ym');
+		$period['permanent'] = !empty($post['permanent']) ? DateTime::createFromFormat('!Ym', $post['permanent'])->format('Ym') : null;
+		$period['resign'] = !empty($post['resign']) ? DateTime::createFromFormat('!Ym', $post['resign'])->format('Ym') : null;
 		$id = parent::_db_insert('users', array_merge($post, $period));
-		$this->_process_photo($files, str_repeat(0, 3 - strlen(id)) . $id);
+		$this->_process_photo($files, Utilities::pad_id($id));
 		$this->_db->exec('REFRESH MATERIALIZED VIEW mv_users');
 		$this->_alert = ['type' => 'success', 'message' => _('User created successfully')];
 		Utilities::redirect_to("users/$id/edit");
@@ -170,7 +169,7 @@ CONTENT;
 		$user = $this->_prepare_data();
 		foreach ($user as $k => $v) {
 			if (isset($post[$k])) continue;
-			if ($k == 'dob') {
+			if ($k == 'dob' && $v) {
 				list($year, $month, $day) = explode('-', $v);
 				$v = ['year' => $year, 'month' => $month, 'day' => $day];
 			}
@@ -193,19 +192,19 @@ CONTENT;
 		krsort($post['dob']);
 		$post['dob'] = (new DateTime(implode('-', $post['dob'])))->format('Y-m-d');
 		$period = [
-			'join' => DateTime::createFromFormat('Ym', $post['join'])->format('Ym')
-			, 'permanent' => $post['permanent'] ? DateTime::createFromFormat('Ym', $post['permanent'])->format('Ym') : null
-			, 'resign' => $post['resign'] ? DateTime::createFromFormat('Ym', $post['resign'])->format('Ym') : null
+			'join' => DateTime::createFromFormat('!Ym', $post['join'])->format('Ym')
+			, 'permanent' => !empty($post['permanent']) ? DateTime::createFromFormat('!Ym', $post['permanent'])->format('Ym') : null
+			, 'resign' => !empty($post['resign']) ? DateTime::createFromFormat('!Ym', $post['resign'])->format('Ym') : null
 		];
 		parent::_db_update('users', array_merge($post, $period));
-		$this->_process_photo($files, $user->id);
+		$this->_process_photo($files, Utilities::pad_id($user->id));
 		$this->_db->exec('REFRESH MATERIALIZED VIEW mv_users');
 		$this->_alert = ['type' => 'success', 'message' => _('User updated successfully')];
 		Utilities::redirect_to("users/$user->id");
 	}
 
 	private function _form($get, $post, $action) {
-		$id = str_repeat(0, 3 - strlen($this->_param['id'])) . $this->_param['id'];
+		$id = Utilities::pad_id($this->_param['id']);
 		$this->_content .=
 		'<h2 class="navbar-form navbar-left"><i class="fa fa-' . ($this->_param['id'] ? 'user' : 'user-plus') . '">&nbsp;</i> ' . _('User') . '</h2>
 		<div class="clearfix"></div>' .
@@ -222,37 +221,37 @@ CONTENT;
 				<div class="col-sm-2">
 					<label for="name" class="control-label">* ' . _('Name') . '</label>
 				</div>
-				<div class="col-sm-2' . ($this->_error_messages['first'] ? ' has-error error' : '') . '">
-					<input id="first" name="first" type="text" value="' . $post['first'] . '" class="form-control" placeholder="' . _('First') . '">
-					<span class="help-block' . ($this->_error_messages['first'] ? ' text-danger' : '') . '">' . _('First') . ' ' . $this->_error_messages['first'] . '</span>
+				<div class="col-sm-2' . ($this->_err('first') ? ' has-error error' : '') . '">
+					<input id="first" name="first" type="text" value="' . ($post['first'] ?? '') . '" class="form-control" placeholder="' . _('First') . '">
+					<span class="help-block' . ($this->_err('first') ? ' text-danger' : '') . '">' . _('First') . ' ' . $this->_err('first') . '</span>
 				</div>
-				<div class="col-sm-2' . ($this->_error_messages['middle'] ? ' has-error error' : '') . '">
-					<input id="middle" name="middle" type="text" value="' . $post['middle'] . '" class="form-control" placeholder="' . _('Middle') . '">
-					<span class="help-block' . ($this->_error_messages['middle'] ? ' text-danger' : '') . '">' . _('Middle') . ' ' . $this->_error_messages['middle'] . '</span>
+				<div class="col-sm-2' . ($this->_err('middle') ? ' has-error error' : '') . '">
+					<input id="middle" name="middle" type="text" value="' . ($post['middle'] ?? '') . '" class="form-control" placeholder="' . _('Middle') . '">
+					<span class="help-block' . ($this->_err('middle') ? ' text-danger' : '') . '">' . _('Middle') . ' ' . $this->_err('middle') . '</span>
 				</div>
-				<div class="col-sm-2' . ($this->_error_messages['last'] ? ' has-error error' : '') . '">
-					<input id="last" name="last" type="text" value="' . $post['last'] . '" class="form-control" placeholder="' . _('Last') . '">
-					<span class="help-block' . ($this->_error_messages['last'] ? ' text-danger' : '') . '">' . _('Last') . ' ' . $this->_error_messages['middle'] . '</span>
+				<div class="col-sm-2' . ($this->_err('last') ? ' has-error error' : '') . '">
+					<input id="last" name="last" type="text" value="' . ($post['last'] ?? '') . '" class="form-control" placeholder="' . _('Last') . '">
+					<span class="help-block' . ($this->_err('last') ? ' text-danger' : '') . '">' . _('Last') . ' ' . $this->_err('middle') . '</span>
 				</div>
-				<div class="col-sm-2' . ($this->_error_messages['alias'] ? ' has-error error' : '') . '">
-					<input id="alias" name="alias" type="text" value="' . $post['alias'] . '" class="form-control" placeholder="' . _('Alias') . '">
-					<span class="help-block' . ($this->_error_messages['alias'] ? ' text-danger' : '') . '">' . _('Alias') . ' ' . $this->_error_messages['alias'] . '</span>
+				<div class="col-sm-2' . ($this->_err('alias') ? ' has-error error' : '') . '">
+					<input id="alias" name="alias" type="text" value="' . ($post['alias'] ?? '') . '" class="form-control" placeholder="' . _('Alias') . '">
+					<span class="help-block' . ($this->_err('alias') ? ' text-danger' : '') . '">' . _('Alias') . ' ' . $this->_err('alias') . '</span>
 				</div>
 			</div>
 			<div class="row form-inline">
 				<div class="col-sm-2">
 					<label for="birth" class="control-label">* ' . _('Place of Birth') . ' / ' . _('Date of Birth') . '</label>
 				</div>
-				<div class="col-sm-2' . ($this->_error_messages['pob'] ? ' has-error error' : '') . '">
-					<input id="pob" name="pob" type="text" value="' . $post['pob'] . '" class="form-control" placeholder="' . _('Place of Birth') . '">
-					<span class="help-block' . ($this->_error_messages['pob'] ? ' text-danger' : '') . '">' . _('Place of Birth') . ' ' . $this->_error_messages['pob'] . '</span>
+				<div class="col-sm-2' . ($this->_err('pob') ? ' has-error error' : '') . '">
+					<input id="pob" name="pob" type="text" value="' . ($post['pob'] ?? '') . '" class="form-control" placeholder="' . _('Place of Birth') . '">
+					<span class="help-block' . ($this->_err('pob') ? ' text-danger' : '') . '">' . _('Place of Birth') . ' ' . $this->_err('pob') . '</span>
 				</div>
-				<div class="col-sm-6' . ($this->_error_messages['dob'] ? ' has-error error' : '') . '">
+				<div class="col-sm-6' . ($this->_err('dob') ? ' has-error error' : '') . '">
 					<select class="form-control" id="dob_day" name="dob[day]">
 						<option value="">&raquo;</option>';
 					foreach (range(1, 31) as $i) {
 						$d = $i < 10 ? '0' . $i : $i;
-						$this->_content .= '<option value="' . $d . '"' . ($d == $post['dob']['day'] ? ' selected' : '') . '>' . $d . '</option>';
+						$this->_content .= '<option value="' . $d . '"' . ($d == ($post['dob']['day'] ?? '') ? ' selected' : '') . '>' . $d . '</option>';
 					}
 					$this->_content .= '
 					</select> - <select class="form-control" id="dob_month" name="dob[month]">
@@ -260,136 +259,136 @@ CONTENT;
 					foreach (['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'] as $k => $v) {
 						$m = $k + 1;
 						$m < 10 && $m = '0' . $m;
-						$this->_content .= '<option value="' . $m . '"' . ($m == $post['dob']['month'] ? ' selected' : '') . '>' . $v . '</option>';
+						$this->_content .= '<option value="' . $m . '"' . ($m == ($post['dob']['month'] ?? '') ? ' selected' : '') . '>' . $v . '</option>';
 					}
 					$this->_content .= '
 					</select> - <select class="form-control" id="dob_year" name="dob[year]">
 						<option value="">&raquo;</option>';
 					foreach (range(1970, $this->_now->format('Y') - 10) as $i) {
-						$this->_content .= '<option value="' . $i . '"' . ($i == $post['dob']['year'] ? ' selected' : '') . '>' . $i++ . '</option>';
+						$this->_content .= '<option value="' . $i . '"' . ($i == ($post['dob']['year'] ?? '') ? ' selected' : '') . '>' . $i++ . '</option>';
 					}
 					$this->_content .= '
 					</select>
-					<span class="help-block' . ($this->_error_messages['dob'] ? ' text-danger' : '') . '">' . _('Date of Birth') . ' ' . $this->_error_messages['dob'] . '</span>
+					<span class="help-block' . ($this->_err('dob') ? ' text-danger' : '') . '">' . _('Date of Birth') . ' ' . $this->_err('dob') . '</span>
 				</div>
 			</div>
 			<div class="row form-inline">
 				<div class="col-sm-2">
 					<label for="ktp_sim" class="control-label">* ' . _('KTP') . ' / ' . _('SIM') . ' / ' . _('NISN') . '</label>
 				</div>
-				<div class="col-sm-2' . ($this->_error_messages['ktp_sim'] ? ' has-error error' : '') . '">
-					<input id="ktp_sim" name="ktp_sim" type="text" value="' . $post['ktp_sim'] . '" class="form-control" placeholder="' . _('KTP') . ' / ' . _('SIM') . ' / ' . _('NISN') . '">
-					<span class="help-block' . ($this->_error_messages['ktp_sim'] ? ' text-danger' : '') . '">' . $this->_error_messages['pob'] . '</span>
+				<div class="col-sm-2' . ($this->_err('ktp_sim') ? ' has-error error' : '') . '">
+					<input id="ktp_sim" name="ktp_sim" type="text" value="' . ($post['ktp_sim'] ?? '') . '" class="form-control" placeholder="' . _('KTP') . ' / ' . _('SIM') . ' / ' . _('NISN') . '">
+					<span class="help-block' . ($this->_err('ktp_sim') ? ' text-danger' : '') . '">' . $this->_err('pob') . '</span>
 				</div>
 			</div>
 			<div class="row form-inline">
 				<div class="col-sm-2">
 					<label for="occupation" class="control-label">* ' . _('Occupation') . '</label>
 				</div>
-				<div class="col-sm-2' . ($this->_error_messages['occupation'] ? ' has-error error' : '') . '">
-					<input id="occupation" name="occupation" type="text" value="' . $post['occupation'] . '" class="form-control" placeholder="' . _('Occupation') . '">
-					<span class="help-block' . ($this->_error_messages['occupation'] ? ' text-danger' : '') . '">' . $this->_error_messages['pob'] . '</span>
+				<div class="col-sm-2' . ($this->_err('occupation') ? ' has-error error' : '') . '">
+					<input id="occupation" name="occupation" type="text" value="' . ($post['occupation'] ?? '') . '" class="form-control" placeholder="' . _('Occupation') . '">
+					<span class="help-block' . ($this->_err('occupation') ? ' text-danger' : '') . '">' . $this->_err('pob') . '</span>
 				</div>
 			</div>
 			<div class="row form-inline">
 				<div class="col-sm-2">
 					<label for="address" class="control-label">* ' . _('Address'). '</label>
 				</div>
-				<div class="col-sm-2' . ($this->_error_messages['address'] ? ' has-error error' : '') . '">
-					<input id="address" name="address" type="text" value="' . $post['address'] . '" class="form-control" placeholder="' . _('Address'). '">
-					<span class="help-block' . ($this->_error_messages['address'] ? ' text-danger' : '') . '">' . _('Address') . ' ' . $this->_error_messages['address'] . '</span>
+				<div class="col-sm-2' . ($this->_err('address') ? ' has-error error' : '') . '">
+					<input id="address" name="address" type="text" value="' . ($post['address'] ?? '') . '" class="form-control" placeholder="' . _('Address'). '">
+					<span class="help-block' . ($this->_err('address') ? ' text-danger' : '') . '">' . _('Address') . ' ' . $this->_err('address') . '</span>
 				</div>
-				<div class="col-sm-2' . ($this->_error_messages['city'] ? ' has-error error' : '') . '">
-					<input id="city" name="city" type="text" value="' . $post['city'] . '" class="form-control" placeholder="' . _('City') . '">
-					<span class="help-block' . ($this->_error_messages['city'] ? ' text-danger' : '') . '">' . _('City') . ' ' . $this->_error_messages['city'] . '</span>
+				<div class="col-sm-2' . ($this->_err('city') ? ' has-error error' : '') . '">
+					<input id="city" name="city" type="text" value="' . ($post['city'] ?? '') . '" class="form-control" placeholder="' . _('City') . '">
+					<span class="help-block' . ($this->_err('city') ? ' text-danger' : '') . '">' . _('City') . ' ' . $this->_err('city') . '</span>
 				</div>
-				<div class="col-sm-2' . ($this->_error_messages['province'] ? ' has-error error' : '') . '">
-					<input id="province" name="province" type="text" value="' . $post['province'] . '" class="form-control" placeholder="' . _('Province') . '">
-					<span class="help-block' . ($this->_error_messages['province'] ? ' text-danger' : '') . '">' . _('Province') . ' ' . $this->_error_messages['province'] . '</span>
+				<div class="col-sm-2' . ($this->_err('province') ? ' has-error error' : '') . '">
+					<input id="province" name="province" type="text" value="' . ($post['province'] ?? '') . '" class="form-control" placeholder="' . _('Province') . '">
+					<span class="help-block' . ($this->_err('province') ? ' text-danger' : '') . '">' . _('Province') . ' ' . $this->_err('province') . '</span>
 				</div>
 			</div>
 			<div class="row form-inline">
 				<div class="col-sm-2">
 					<label for="email" class="control-label">* ' . _('Email') . ' / ' . _('Mobile Phone') . ' / ' . _('Forbiscom ID') . '</label>
 				</div>
-				<div class="col-sm-2' . ($this->_error_messages['email'] ? ' has-error error' : '') . '">
-					<input id="email" name="email" type="text" value="' . $post['email'] . '" class="form-control" placeholder="' . _('Email') . '">
-					<span class="help-block' . ($this->_error_messages['email'] ? ' text-danger' : '') . '">' . _('Email') . ' ' . $this->_error_messages['email'] . '</span>
+				<div class="col-sm-2' . ($this->_err('email') ? ' has-error error' : '') . '">
+					<input id="email" name="email" type="text" value="' . ($post['email'] ?? '') . '" class="form-control" placeholder="' . _('Email') . '">
+					<span class="help-block' . ($this->_err('email') ? ' text-danger' : '') . '">' . _('Email') . ' ' . $this->_err('email') . '</span>
 				</div>
-				<div class="col-sm-2' . ($this->_error_messages['phone'] ? ' has-error error' : '') . '">
-					<input id="phone" name="phone" type="text" value="' . $post['phone'] . '" class="form-control" placeholder="' . _('Mobile Phone') . '">
-					<span class="help-block' . ($this->_error_messages['phone'] ? ' text-danger' : '') . '">' . _('Mobile Phone') . ' ' . $this->_error_messages['phone'] . '</span>
+				<div class="col-sm-2' . ($this->_err('phone') ? ' has-error error' : '') . '">
+					<input id="phone" name="phone" type="text" value="' . ($post['phone'] ?? '') . '" class="form-control" placeholder="' . _('Mobile Phone') . '">
+					<span class="help-block' . ($this->_err('phone') ? ' text-danger' : '') . '">' . _('Mobile Phone') . ' ' . $this->_err('phone') . '</span>
 				</div>
-				<div class="col-sm-2' . ($this->_error_messages['forbiscom_id'] ? ' has-error error' : '') . '">
-					<input id="forbiscom_id" name="forbiscom_id" type="text" value="' . $post['forbiscom_id'] . '" class="form-control" placeholder="' . _('Forbiscom User ID') . '">
-					<span class="help-block' . ($this->_error_messages['forbiscom_id'] ? ' text-danger' : '') . '">' . _('Forbiscom User ID') . ' ' . $this->_error_messages['forbiscom_id'] . '</span>
+				<div class="col-sm-2' . ($this->_err('forbiscom_id') ? ' has-error error' : '') . '">
+					<input id="forbiscom_id" name="forbiscom_id" type="text" value="' . ($post['forbiscom_id'] ?? '') . '" class="form-control" placeholder="' . _('Forbiscom User ID') . '">
+					<span class="help-block' . ($this->_err('forbiscom_id') ? ' text-danger' : '') . '">' . _('Forbiscom User ID') . ' ' . $this->_err('forbiscom_id') . '</span>
 				</div>
 			</div>
 			<div class="row form-inline">
 				<div class="col-sm-2">
 					<label for="photo" class="control-label">* ' . _('Photo') . '</label>
 				</div>
-				<div class="col-sm-2' . ($this->_error_messages['photo'] ? ' has-error error' : '') . '">
+				<div class="col-sm-2' . ($this->_err('photo') ? ' has-error error' : '') . '">
 					<input id="photo" name="photo" type="file">
-					<span class="help-block' . ($this->_error_messages['photo'] ? ' text-danger' : '') . '">' . $this->_error_messages['photo'] . '</span>
+					<span class="help-block' . ($this->_err('photo') ? ' text-danger' : '') . '">' . $this->_err('photo') . '</span>
 				</div>
 			</div>
 			<div class="row form-inline">
 				<div class="col-sm-2">
 					<label for="role" class="control-label">* ' . _('Role') . '</label>
 				</div>
-				<div class="col-sm-2' . ($this->_error_messages['role_id'] ? ' has-error error' : '') . '">';
+				<div class="col-sm-2' . ($this->_err('role_id') ? ' has-error error' : '') . '">';
 				foreach ($this->_db->query("SELECT id, name FROM roles WHERE name <> 'Anonymous'") as $row) {
-					$this->_content .= '<div class="radio"><label><input type="radio" name="role_id" value="' . $row['id'] . '"' . ($row['id'] == $post['role_id'] ? ' checked' : '') . '> ' . $row['name'] . '</label></div><br>';
+					$this->_content .= '<div class="radio"><label><input type="radio" name="role_id" value="' . $row['id'] . '"' . ($row['id'] == ($post['role_id'] ?? '') ? ' checked' : '') . '> ' . $row['name'] . '</label></div><br>';
 				}
 				$this->_content .=
-					'<span class="help-block' . ($this->_error_messages['role_id'] ? ' text-danger' : '') . '">' . $this->_error_messages['role_id'] . '</span>
+					'<span class="help-block' . ($this->_err('role_id') ? ' text-danger' : '') . '">' . $this->_err('role_id') . '</span>
 				</div>
 			</div>
 			<div class="row form-inline">
 				<div class="col-sm-2">
 					<label for="period" class="control-label">* ' . _('Join') . ' / ' . _('Permanent') . ' / ' . _('Resign') . '</label>
 				</div>
-				<div class="col-sm-2' . ($this->_error_messages['join'] ? ' has-error error' : '') . '">
+				<div class="col-sm-2' . ($this->_err('join') ? ' has-error error' : '') . '">
 					<select id="join" name="join" class="form-control text-right">';
 					$current_period = $this->_now->format('Ym');
 					foreach ($this->_select_period_options as $k => $v) {
 						if ($k > $current_period) {
 							break;
 						}
-						$this->_content .= "<option value=\"$k\"" . ($k == $post['join'] ? ' selected' : '') . ">$v</option>";
+						$this->_content .= "<option value=\"$k\"" . ($k == ($post['join'] ?? '') ? ' selected' : '') . ">$v</option>";
 					}
 					$this->_content .= '
 					</select>
-					<span class="help-block' . ($this->_error_messages['join'] ? ' text-danger' : '') . '">' . _('Join') . ' ' . $this->_error_messages['join'] . '</span>
+					<span class="help-block' . ($this->_err('join') ? ' text-danger' : '') . '">' . _('Join') . ' ' . $this->_err('join') . '</span>
 				</div>
-				<div class="col-sm-2' . ($this->_error_messages['permanent'] ? ' has-error error' : '') . '">
+				<div class="col-sm-2' . ($this->_err('permanent') ? ' has-error error' : '') . '">
 					<select id="permanent" name="permanent" class="form-control text-right">';
 
 					foreach ($this->_select_period_options as $k => $v) {
 						if ($k > $current_period) {
 							break;
 						}
-						$this->_content .= "<option value=\"$k\"" . ($k == $post['permanent'] ? ' selected' : '') . ">$v</option>";
+						$this->_content .= "<option value=\"$k\"" . ($k == ($post['permanent'] ?? '') ? ' selected' : '') . ">$v</option>";
 					}
 
 					$this->_content .= '
 					</select>
-					<span class="help-block' . ($this->_error_messages['permanent'] ? ' text-danger' : '') . '">' . _('Permanent') . ' ' . $this->_error_messages['permanent'] . '</span>
+					<span class="help-block' . ($this->_err('permanent') ? ' text-danger' : '') . '">' . _('Permanent') . ' ' . $this->_err('permanent') . '</span>
 				</div>
-				<div class="col-sm-2' . ($this->_error_messages['resign'] ? ' has-error error' : '') . '">
+				<div class="col-sm-2' . ($this->_err('resign') ? ' has-error error' : '') . '">
 					<select id="resign" name="resign" class="form-control text-right">';
 
 					foreach ($this->_select_period_options as $k => $v) {
 						if ($k > $current_period) {
 							break;
 						}
-						$this->_content .= "<option value=\"$k\"" . ($k == $post['resign'] ? ' selected' : '') . ">$v</option>";
+						$this->_content .= "<option value=\"$k\"" . ($k == ($post['resign'] ?? '') ? ' selected' : '') . ">$v</option>";
 					}
 
 					$this->_content .= '
 					</select>
-					<span class="help-block' . ($this->_error_messages['resign'] ? ' text-danger' : '') . '">' . _('Resign') . ' ' . $this->_error_messages['resign'] . '</span>
+					<span class="help-block' . ($this->_err('resign') ? ' text-danger' : '') . '">' . _('Resign') . ' ' . $this->_err('resign') . '</span>
 				</div>
 			</div>
 			<div class="form-group">
@@ -431,15 +430,14 @@ CONTENT;
 		foreach (['year', 'month', 'day'] as $k) {
 			empty($post['dob'][$k]) && $dob_error_messages[] = "$k " . _('is blank');
 		}
-		if (empty($dob_error_messages)) {
-			$date = new DateTime(join('-', $post['dob']));
-			!$date && $dob_error_messages[] = _('is invalid');
+		if (empty($dob_error_messages) && !checkdate((int) $post['dob']['month'], (int) $post['dob']['day'], (int) $post['dob']['year'])) {
+			$dob_error_messages[] = _('is invalid');
 		}
 		$dob_error_messages && $this->_error_messages['dob'] = join(', ', $dob_error_messages);
 
 		if (empty($post['ktp_sim'])) {
 			$this->_error_messages['ktp_sim'] = _('is blank');
-		} else if ($this->_db->query("SELECT COUNT(1) FROM mv_users WHERE resign IS NULL AND ktp_sim = '{$post['ktp_sim']}'" . ($this->_param['id'] ? " AND id <> {$this->_param['id']}" : ''))->fetchColumn()) {
+		} else if (!$this->_unique('mv_users', 'ktp_sim', $post['ktp_sim'])) {
 			$this->_error_messages['ktp_sim'] = _('is taken');
 		}
 
@@ -471,7 +469,7 @@ CONTENT;
 			$this->_error_messages['email'] = _('is blank');
 		} else if (!preg_match('/^([\w\.%\+\-]+)@([\w\-]+\.)+([\w]{2,})$/i', $post['email'])) {
 			$this->_error_messages['email'] = _('is invalid');
-		} else if ($this->_db->query("SELECT COUNT(1) FROM mv_users WHERE resign IS NULL AND email = '{$post['email']}'" . ($this->_param['id'] ? " AND id <> {$this->_param['id']}" : ''))->fetchColumn()) {
+		} else if (!$this->_unique('mv_users', 'email', $post['email'])) {
 			$this->_error_messages['email'] = _('is taken');
 		}
 
@@ -479,7 +477,7 @@ CONTENT;
 			$this->_error_messages['phone'] = _('is blank');
 		} else if (!ctype_digit($post['phone'])) {
 			$this->_error_messages['phone'] = _('is invalid');
-		} else if ($this->_db->query("SELECT COUNT(1) FROM mv_users WHERE resign IS NULL AND phone = '{$post['phone']}'" . ($this->_param['id'] ? " AND id <> {$this->_param['id']}" : ''))->fetchColumn()) {
+		} else if (!$this->_unique('mv_users', 'phone', $post['phone'])) {
 			$this->_error_messages['phone'] = _('is taken');
 		}
 
@@ -487,7 +485,7 @@ CONTENT;
 			$this->_error_messages['forbiscom_id'] = _('is blank');
 		} else if (!preg_match('/^[A-Za-z0-9._\- ]+$/', $post['forbiscom_id'])) {
 			$this->_error_messages['forbiscom_id'] = _('is invalid');
-		} else if ($this->_db->query("SELECT COUNT(1) FROM mv_users WHERE resign IS NULL AND forbiscom_id = '{$post['forbiscom_id']}'" . ($this->_param['id'] ? " AND id <> {$this->_param['id']}" : ''))->fetchColumn()) {
+		} else if (!$this->_unique('mv_users', 'forbiscom_id', $post['forbiscom_id'])) {
 			$this->_error_messages['forbiscom_id'] = _('is taken');
 		}
 
@@ -505,20 +503,23 @@ CONTENT;
 		$stmt->execute([$this->_param['id']]);
 		$user = $stmt->fetchObject();
 		if (!$user) {
-			$this->_alert = ['type' => 'danger', 'message' => sprintf(_('User with ID %s is not found'), $user->id)];
+			$this->_alert = ['type' => 'danger', 'message' => sprintf(_('User with ID %s is not found'), $this->_param['id'])];
 			Utilities::redirect_to('users');
 		}
 		return $user;
 	}
 
 	private function _resize_image($origin, $w, $h, $crop = FALSE) {
-		list($width, $height) = getimagesize($origin);
+		[$width, $height] = getimagesize($origin) ?: [0, 0];
+		if (!$width || !$height) {
+			return;
+		}
 		$r = $width / $height;
 		if ($crop) {
 			if ($width > $height) {
-				$width = ceil($width - ($width * abs($r - $w / $h)));
+				$width = (int) ceil($width - ($width * abs($r - $w / $h)));
 			} else {
-				$height = ceil($height - ($height * abs($r - $w / $h)));
+				$height = (int) ceil($height - ($height * abs($r - $w / $h)));
 			}
 			$new_width = $w;
 			$new_height = $h;
@@ -531,16 +532,21 @@ CONTENT;
 				$new_width = $w;
 			}
 		}
-		$src = imagecreatefromjpeg($origin);
+		$src = imagecreatefromstring((string) file_get_contents($origin));
+		if (!$src) {
+			return;
+		}
+		$new_width  = max(1, (int) round($new_width));
+		$new_height = max(1, (int) round($new_height));
 		$dst = imagecreatetruecolor($new_width, $new_height);
 		imagecopyresampled($dst, $src, 0, 0, 0, 0, $new_width, $new_height, $width, $height);
-		imageinterlace($src, 1);
+		imageinterlace($dst, true);
 		imagejpeg($dst, $origin, 100);
-		foreach ([$src, $dst] as $k) { imagedestroy($k); }
+		// imagedestroy() is a no-op since PHP 8.0 and deprecated as of 8.5; GdImage objects are freed automatically.
 	}
 
 	private function _process_photo($files, $id) {
-		$photo = &$files['photo'];
+		$photo = $files['photo'] ?? [];
 		if (empty($photo['tmp_name']) || !empty($photo['error']) || !in_array(exif_imagetype($photo['tmp_name']), [IMAGETYPE_JPEG, IMAGETYPE_PNG])) return;
 		$filename = "images/photos/$id";
 		move_uploaded_file($photo['tmp_name'], $filename . '.jpg');

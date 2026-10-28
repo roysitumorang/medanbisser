@@ -2,7 +2,7 @@
 
 class Sessions extends Application {
 	function new($get, $post, $files) {
-		$_SESSION['user_id'] && Utilities::redirect_to('home');
+		!empty($_SESSION['user_id']) && Utilities::redirect_to('home');
 		$this->_form($get, $post, $files);
 	}
 
@@ -11,9 +11,10 @@ class Sessions extends Application {
 			$stmt = $this->_db->prepare('SELECT id, "hash" FROM users WHERE (id::text = ? OR email = ?) AND resign IS NULL');
 			$stmt->execute([$post['login'], $post['login']]);
 			$user = $stmt->fetchObject();
-			if ($user && password_verify($post['password'], $user->hash)) {
+			if ($user && password_verify((string) $post['password'], rtrim((string) $user->hash))) {
+				session_regenerate_id(true);
 				$_SESSION['user_id'] = $user->id;
-				$this->_db->query("UPDATE users SET last_login = '" . $this->_now->format('Y-m-d H:i:s') . "' WHERE id = $user->id");
+				$this->_db->prepare('UPDATE users SET last_login = ? WHERE id = ?')->execute([$this->_now->format('Y-m-d H:i:s'), $user->id]);
 				Utilities::redirect_to('home');
 			}
 		}
@@ -22,7 +23,7 @@ class Sessions extends Application {
 	}
 
 	function destroy($get, $post, $files) {
-		$_SESSION = ['locale' => $_SESSION['locale']];
+		$_SESSION = ['locale' => $_SESSION['locale'] ?? null];
 		session_destroy();
 		Utilities::redirect_to('home');
 	}
@@ -37,7 +38,7 @@ class Sessions extends Application {
 				<div class="form-group">
 					<label for="login" class="col-xs-6 col-md-4 control-label"><i class="fa fa-user">&nbsp;</i>&nbsp;' . _('ID / Email') . '</label>
 					<div class="col-xs-6 col-md-4">
-						<input id="login" name="login" type="text" value="' . $post['login'] . '" size="30" maxlength="30" class="form-control" placeholder="' . _('ID / Email') . '">
+						<input id="login" name="login" type="text" value="' . htmlspecialchars((string) ($post['login'] ?? '')) . '" size="30" maxlength="30" class="form-control" placeholder="' . _('ID / Email') . '">
 					</div>
 				</div>
 				<div class="form-group">
@@ -58,8 +59,8 @@ class Sessions extends Application {
 
 	function show($get, $post, $files) {
 		$user = $this->_current_user();
-		$last_login = new DateTime($user->last_login);
-		$id = str_repeat('0', 3 - strlen($user->id)) . $user->id;
+		$last_login = new DateTime($user->last_login ?: 'now');
+		$id = Utilities::pad_id($user->id);
 		$this->_content .=
 			$this->_get_form_notification() .
 			"<table class=\"table table-striped table-hover table-condensed\">
@@ -110,11 +111,13 @@ class Sessions extends Application {
 					</tr>
 					<tr>
 						<td class=\"text-right\">" . _('Join') . ' / ' . _('Permanent') . "</td>
-						<td>" . $this->_period_formatter->format(new DateTime($user->join . '01')) . ' / ' . ($user->permanent ? $this->_period_formatter->format(new DateTime($user->permanent . '01')) : '-') . "</td>
+						<td>" . $this->_format_period($user->join) . ' / ' . ($this->_format_period($user->permanent) ?: '-') . "</td>
 					</tr>
 					<tr>
 						<td class=\"text-right\">" . _('Cash Status') . "</td>
-						<td>$user->cash_status</td>
+						<td>" . ($user->debt
+							? _('Debt') . ' ' . sprintf(ngettext('%d Month', '%d Months', (int) $user->months_of_debt), $user->months_of_debt) . ' / ' . number_format((float) $user->debt)
+							: _('Paid') . ' ' . _('up to') . ' ' . ($this->_format_period($user->last_pay_period) ?: '-') . ' / ' . number_format((float) $user->paid)) . "</td>
 					</tr>
 					<tr>
 						<td class=\"text-right\">" . _('Role') . "</td>
@@ -154,23 +157,23 @@ class Sessions extends Application {
 				<legend class="text-center"><h4><i class="fa fa-info-circle">&nbsp;</i> ' . _('To change your password, enter your current password and the new password') . '</h4></legend>
 				<div class="form-group">
 					<label for="password" class="col-xs-6 col-md-4 control-label">' . _('Current Password') . '</label>
-					<div class="col-xs-6 col-md-4' . ($this->_error_messages['current_password'] ? ' has-error error' : '') . '">
+					<div class="col-xs-6 col-md-4' . ($this->_err('current_password') ? ' has-error error' : '') . '">
 						<input id="password" name="current_password" type="password" size="30" maxlength="30" class="form-control">
-						<span class="help-block' . ($this->_error_messages['current_password'] ? ' text-danger' : '') . '">' . $this->_error_messages['current_password'] . '</span>
+						<span class="help-block' . ($this->_err('current_password') ? ' text-danger' : '') . '">' . $this->_err('current_password') . '</span>
 					</div>
 				</div>
 				<div class="form-group">
 					<label for="password" class="col-xs-6 col-md-4 control-label">' . _('New Password') . '</label>
-					<div class="col-xs-6 col-md-4' . ($this->_error_messages['new_password'] ? ' has-error error' : '') . '">
+					<div class="col-xs-6 col-md-4' . ($this->_err('new_password') ? ' has-error error' : '') . '">
 						<input id="password" name="new_password" type="password" size="30" maxlength="30" class="form-control">
-						<span class="help-block' . ($this->_error_messages['new_password'] ? ' text-danger' : '') . '">' . $this->_error_messages['new_password'] . '</span>
+						<span class="help-block' . ($this->_err('new_password') ? ' text-danger' : '') . '">' . $this->_err('new_password') . '</span>
 					</div>
 				</div>
 				<div class="form-group">
 					<label for="password" class="col-xs-6 col-md-4 control-label">' . _('Password Confirmation') . '</label>
-					<div class="col-xs-6 col-md-4' . ($this->_error_messages['confirm_new_password'] ? ' has-error error' : '') . '">
+					<div class="col-xs-6 col-md-4' . ($this->_err('confirm_new_password') ? ' has-error error' : '') . '">
 						<input id="password" name="confirm_new_password" type="password" size="30" maxlength="30" class="form-control">
-						<span class="help-block' . ($this->_error_messages['confirm_new_password'] ? ' text-danger' : '') . '">' . $this->_error_messages['confirm_new_password'] . '</span>
+						<span class="help-block' . ($this->_err('confirm_new_password') ? ' text-danger' : '') . '">' . $this->_err('confirm_new_password') . '</span>
 					</div>
 				</div>
 				<div class="form-group">
@@ -198,10 +201,10 @@ class Sessions extends Application {
 		}
 		if (empty($post['current_password'])) {
 			$this->_error_messages['current_password'] = _('is blank');
-		} else if (!password_verify($post['current_password'], $user->hash)) {
+		} else if (!password_verify((string) $post['current_password'], rtrim((string) $user->hash))) {
 			$this->_error_messages['current_password'] = _('is wrong');
 		} else if (empty($this->_error_messages['new_password']) && empty($this->_error_messages['confirm_new_password'])) {
-			if (password_verify($post['new_password'], $user->password)) {
+			if (password_verify((string) $post['new_password'], rtrim((string) $user->hash))) {
 				$this->_error_messages['new_password'] = _('you cannot reuse a previous password');
 			} else {
 				parent::_db_update('users', ['hash' => Utilities::encrypt_password($post['new_password'])
@@ -209,8 +212,7 @@ class Sessions extends Application {
 					, 'id' => $user->id]);
 				$this->_db->exec('REFRESH MATERIALIZED VIEW mv_users');
 				$this->_alert = ['type' => 'success', 'message' => _('Password changed successfully, please logout and login to apply the new password')];
-				header('Location: /my-profile');
-				exit;
+				Utilities::redirect_to('sessions/mine');
 			}
 		}
 		$this->_alert = ['type' => 'danger', 'message' => _('Password changed unsuccessfully')];
@@ -218,6 +220,8 @@ class Sessions extends Application {
 	}
 
 	private function _current_user() {
-		return $this->_db->query("SELECT * FROM mv_users WHERE id = '{$_SESSION['user_id']}'")->fetchObject();
+		$stmt = $this->_db->prepare('SELECT * FROM mv_users WHERE id = ?');
+		$stmt->execute([$_SESSION['user_id'] ?? 0]);
+		return $stmt->fetchObject() ?: Utilities::redirect_to('sessions/new');
 	}
 }

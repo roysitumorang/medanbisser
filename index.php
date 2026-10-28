@@ -1,67 +1,69 @@
 <?php
 
-register_shutdown_function(function($server) {
-	ob_end_flush();
+register_shutdown_function(function () {
+	ob_get_level() && ob_end_flush();
 	session_write_close();
-}, $_SERVER);
-ob_start(function($buffer) {
-	return preg_replace(['/(\s)+/s', '/\>(\s)+/s', '/(\s)+\</s', '/(\s+)?=(\s+)?/s'], ['\\1', '>', '<', '='], $buffer);
 });
+// Output handlers must return a string (returning anything else is deprecated as of PHP 8.5).
+ob_start(fn(string $buffer): string => preg_replace(['/(\s)+/s', '/\>(\s)+/s', '/(\s)+\</s', '/(\s+)?=(\s+)?/s'], ['\\1', '>', '<', '='], $buffer) ?? $buffer);
 $db = new PDO('pgsql:dbname=medanbisser_erp', 'postgres', 'tR1adpass#', [
 	PDO::ATTR_ERRMODE          => PDO::ERRMODE_EXCEPTION,
 	PDO::ATTR_ORACLE_NULLS     => PDO::NULL_EMPTY_STRING,
-	PDO::ATTR_PERSISTENT       => 1,
-	PDO::ATTR_EMULATE_PREPARES => 0,
+	PDO::ATTR_PERSISTENT       => true,
+	PDO::ATTR_EMULATE_PREPARES => false,
 ]);
+require 'Utilities.php';
 require 'Session.php';
 new Session($db);
 session_start();
-define('LOCALES', ['id_ID' => 'Bahasa Indonesia', 'en_US' => 'English']);
+const LOCALES = ['id_ID' => 'Bahasa Indonesia', 'en_US' => 'English'];
 $locales = array_keys(LOCALES);
 $locale  = &$_SESSION['locale'];
-if (!in_array($locale, $locales)) {
+if (!in_array($locale, $locales, true)) {
 	$locale = $locales[0];
 }
-define('ROLE', $_SESSION['user_id'] ? $db->query("SELECT r.name FROM users u JOIN roles r ON u.role_id = r.id WHERE u.id = {$_SESSION['user_id']}")->fetchColumn() : 'Anonymous');
-require 'Utilities.php';
-$routes = require 'Routes.php';
-$_SESSION['role_permissions'] = (require 'Role_Permissions.php')[ROLE];
-$route = null;
-foreach (['request_method', 'request_time', 'request_time_float', 'request_uri'] as $item) {
-	$k     = strtoupper($item);
-	$$item = $_SERVER[$k];
+$user_id = $_SESSION['user_id'] ?? null;
+if ($user_id) {
+	$stmt = $db->prepare('SELECT r.name FROM users u JOIN roles r ON u.role_id = r.id WHERE u.id = ?');
+	$stmt->execute([$user_id]);
+	define('ROLE', $stmt->fetchColumn() ?: 'Anonymous');
+} else {
+	define('ROLE', 'Anonymous');
 }
-$request_uri = strtr($request_uri, [sprintf('?%s', $_SERVER['QUERY_STRING']) => '']);
+$routes = require 'Routes.php';
+$_SESSION['role_permissions'] = (require 'Role_Permissions.php')[ROLE] ?? [];
+$route          = null;
+$request_method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+$request_uri    = explode('?', $_SERVER['REQUEST_URI'] ?? '/', 2)[0];
 foreach ($routes as $item) {
 	if ($request_method === $item['request_method'] && preg_match($item['url'], $request_uri, $param)) {
 		$route = [
 			'controller' => $item['controller'],
 			'method'     => $item['method'],
-			'param'      => $param
+			'param'      => $param,
 		];
 		break;
 	}
 }
-if (!$route) {
-	$route = [
-		'controller' => 'Posts',
-		'method'     => 'show',
-		'param'      => ['alias' => 404],
-	];
-}
-if (in_array($route['param']['locale'], $locales) && $locale <> $route['param']['locale']) {
-	$locale = $route['param']['locale'];
+$route ??= [
+	'controller' => 'Posts',
+	'method'     => 'show',
+	'param'      => ['alias' => '404'],
+];
+$route_locale = $route['param']['locale'] ?? null;
+if (in_array($route_locale, $locales, true) && $locale !== $route_locale) {
+	$locale = $route_locale;
 }
 putenv("LANGUAGE={$locale}");
 setlocale(LC_ALL, $locale . '.utf8');
-bindtextdomain($locale, dirname(__FILE__) . '/locales');
-bind_textdomain_codeset($domain, 'UTF-8');
+bindtextdomain($locale, __DIR__ . '/locales');
+bind_textdomain_codeset($locale, 'UTF-8');
 textdomain($locale);
-if (!array_key_exists($route['controller'], $_SESSION['role_permissions']) || !in_array($route['method'], $_SESSION['role_permissions'][$route['controller']])) {
+if (!in_array($route['method'], $_SESSION['role_permissions'][$route['controller']] ?? [], true)) {
 	$route = [
 		'controller' => 'Posts',
 		'method'     => 'show',
-		'param'      => ['alias' => 403],
+		'param'      => ['alias' => '403'],
 	];
 }
 $file       = "modules/{$route['controller']}.php";
@@ -70,27 +72,22 @@ $javascript = '';
 $login_menu = '';
 $main_menu  = '';
 if (file_exists($file)) {
-	include 'Application.php';
-	include $file;
-	$module  = $route['controller'];
-	$$module = new $module($db, $route);
-	$method  = $route['method'];
-
-	if (is_subclass_of($$module, 'Application') && method_exists($$module, $method)) {
-		call_user_func_array([$$module, $method], [$_GET, $_POST, $_FILES]);
-		$content    = $$module->get_content();
-		$javascript = $$module->get_javascript();
-		$login_menu = $$module->get_right_menu();
+	require 'Application.php';
+	require $file;
+	$class  = $route['controller'];
+	$method = $route['method'];
+	$module = new $class($db, $route);
+	if ($module instanceof Application && method_exists($module, $method)) {
+		$module->$method($_GET, $_POST, $_FILES);
+		$content    = $module->get_content();
+		$javascript = $module->get_javascript();
+		$login_menu = $module->get_right_menu();
 	}
 }
 require 'Menus.php';
-foreach ($menus as $route) {
-	$main_menu .= '<li' . ($route['active'] ? ' class="active"' : '') . '><a href="' . Utilities::link_to($route['url']) . '"><i class="fa fa-' . $route['icon'] . '">&nbsp;</i>&nbsp;' . $route['title'] . '</a></li>';
+foreach ($menus as $menu) {
+	$main_menu .= '<li' . ($menu['active'] ? ' class="active"' : '') . '><a href="' . Utilities::link_to($menu['url']) . '"><i class="fa fa-' . $menu['icon'] . '">&nbsp;</i>&nbsp;' . $menu['title'] . '</a></li>';
 }
-foreach (['error_messages', 'alert'] as $k) {
-	if (isset($_SESSION[$k])) {
-		unset($_SESSION[$k]);
-	}
-}
+unset($_SESSION['error_messages'], $_SESSION['alert']);
 $template = file_get_contents('template.html');
 echo sprintf($template, $main_menu, $login_menu, $content, $javascript ? sprintf('<script>%s</script>', $javascript) : '');

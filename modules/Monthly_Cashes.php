@@ -5,8 +5,7 @@ class Monthly_Cashes extends Application {
 
 	function __construct($db, $route) {
 		parent::__construct($db, $route);
-		!apcu_exists('monthly_cashes_order_fields') && apcu_add('monthly_cashes_order_fields', ['Nama' => 'full_name', 'Nomor ID' => 'id']);
-		$this->_order_fields = apcu_fetch('monthly_cashes_order_fields');
+		$this->_order_fields = $this->_cached('monthly_cashes_order_fields', fn() => ['Nama' => 'full_name', 'Nomor ID' => 'id']);
 		$this->_current_year = $this->_now->format('Y');
 	}
 
@@ -24,7 +23,7 @@ class Monthly_Cashes extends Application {
 		$this->_content .= '
 			<h2 class="navbar-form navbar-left"><i class="fa fa-dollar">&nbsp;</i> ' . ngettext('Monthly Cash', 'Monthly Cashes', 2) . '</h2>
 			<form method="GET" action="' . Utilities::link_to('monthly-cashes') . '" class="navbar-form navbar-right" role="search" onsubmit="(\'' . _('Search') . '\'==$(\'[name=q\').val())&amp;&amp;$(\'[name=q]\').val(\'\')">
-				<input type="text" name="q" value="' . $get['q'] . '" class="form-control" placeholder="' . _('Search') . '">
+				<input type="text" name="q" value="' . htmlspecialchars($get['q'] ?? '') . '" class="form-control" placeholder="' . _('Search') . '">
 				<button type="submit" class="btn btn-default"><i class="fa fa-search">&nbsp;</i> ' . _('Search') . '</button>';
 		$this->_content .= $this->_allowed_to_access_link('Monthly_Cashes', 'create') ? '<a type="button" href="' . Utilities::link_to('monthly-cashes/new') . '" class="btn btn-default"><i class="fa fa-user-plus">&nbsp;</i> ' . _('New') . '</a>' : '';
 		$colspan = count($this->_periods) - 12;
@@ -55,7 +54,7 @@ class Monthly_Cashes extends Application {
 CONTENT;
 
 		foreach ($this->_rows as $row) {
-			$id = str_repeat('0', 3 - strlen($row->id)) . $row->id;
+			$id = Utilities::pad_id($row->id);
 			$this->_content .= "
 					<tr>
 						<td class=\"text-center\">$id</td>
@@ -65,8 +64,8 @@ CONTENT;
 				$this->_content .= '<td class="text-center">' . $row->$f . '</td>';
 			}
 			$this->_content .= "
-						<td class=\"text-right text-nowrap\">" . number_format($row->paid) . "</td>
-						<td class=\"text-right text-nowrap\">" . ($row->months_of_debt ? sprintf(ngettext('%d Month', '%d Months', $row->months_of_debt), $row->months_of_debt) . ' / ' . number_format($row->debt) : '-') . "</td>
+						<td class=\"text-right text-nowrap\">" . number_format((float) $row->paid) . "</td>
+						<td class=\"text-right text-nowrap\">" . ($row->months_of_debt ? sprintf(ngettext('%d Month', '%d Months', $row->months_of_debt), $row->months_of_debt) . ' / ' . number_format((float) $row->debt) : '-') . "</td>
 					</tr>";
 		}
 
@@ -83,19 +82,21 @@ CONTENT;
 			$months->offsetSet($i - 1, sprintf('%s%d', $i < 10 ? '0' : '', $i));
 		}
 		$stmt = $this->_db->prepare('WITH upsert AS (UPDATE mv_cashes SET "01" = :01, "02" = :02, "03" = :03, "04" = :04, "05" = :05, "06" = :06, "07" = :07, "08" = :08, "09" = :09, "10" = :10, "11" = :11, "12" = :12, modified_by = :by, modified_ip = :ip, modified_at = :at WHERE user_id = :user_id AND year_id = :year_id RETURNING 1) INSERT INTO mv_cashes (user_id, year_id, "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", created_by, created_ip, created_at) SELECT :user_id, :year_id, :01, :02, :03, :04, :05, :06, :07, :08, :09, :10, :11, :12, :by, :ip, :at WHERE NOT EXISTS(SELECT 1 FROM upsert)');
-		$params = [[':by', $_SESSION['user_id']]
+		$params = [[':by', $_SESSION['user_id'] ?? null]
 			, [':ip', Utilities::get_real_ip_address()]
 			, [':at', $this->_now->format('Y-m-d H:i:s')]];
 		foreach ($params as $param) {
 			call_user_func_array([$stmt, 'bindValue'], $param);
 		}
-		foreach ($post['last_pay_period'] as $user_id => $last_pay_period) {
-			if (!is_int($user_id) || !($user = $this->_db->query('SELECT last_pay_period, "join" FROM mv_users WHERE resign IS NULL AND id = ' . $user_id)->fetchObject())) continue;
-			if (ctype_digit($last_pay_period) || strlen($last_pay_period) == 6) {
+		$user_stmt = $this->_db->prepare('SELECT last_pay_period, "join" FROM mv_users WHERE resign IS NULL AND id = ?');
+		foreach ((array) ($post['last_pay_period'] ?? []) as $user_id => $last_pay_period) {
+			$last_pay_period = (string) $last_pay_period;
+			if (!is_int($user_id) || !$user_stmt->execute([$user_id]) || !($user = $user_stmt->fetchObject())) continue;
+			if (ctype_digit($last_pay_period) && strlen($last_pay_period) == 6) {
 				$interval = new DateInterval('P1M');
 				$start = new DateTime(($user->last_pay_period ?: $user->join) . '01');
 				$user->last_pay_period && $start->add($interval);
-				foreach (new DatePeriod($start, $interval, DateTime::createFromFormat('Ym', $last_pay_period)) as $date) {
+				foreach (new DatePeriod($start, $interval, DateTime::createFromFormat('!Ym', $last_pay_period)) as $date) {
 					parent::_db_insert('cashes', [
 						'user_id' => $user_id
 						, 'period_id' => $date->format('Ym')
@@ -104,7 +105,7 @@ CONTENT;
 				}
 			}
 			$stmt->bindValue(':user_id', $user_id);
-			foreach (range(substr($user->join, 0, 4), $this->_current_year) as $year) {
+			foreach (range((int) substr((string) $user->join, 0, 4), (int) $this->_current_year) as $year) {
 				$stmt->bindValue(':year_id', $year);
 				$months->rewind();
 				while ($months->valid()) {
@@ -164,9 +165,9 @@ CONTENT;
 				</thead>
 				<tbody>';
 
-		$result = $this->_db->query('SELECT u.id, u.full_name, u.last_pay_period, u.paid, u.months_of_debt, u.debt, m.prev_01, m.prev_02, m.prev_03, m.prev_04, m.prev_05, m.prev_06, m.prev_07, m.prev_08, m.prev_09, m.prev_10, m.prev_11, m.prev_12, m.cur_01, m.cur_02, m.cur_03, m.cur_04, m.cur_05, m.cur_06, m.cur_07, m.cur_08, m.cur_09, m.cur_10, m.cur_11, m.cur_12 FROM mv_users u LEFT JOIN mv_last_two_years_cashes m USING(id) WHERE u.resign IS NULL ORDER BY u.full_name');
+		$result = $this->_db->query('SELECT u.id, u.full_name, u."join", u.last_pay_period, u.paid, u.months_of_debt, u.debt, m.prev_01, m.prev_02, m.prev_03, m.prev_04, m.prev_05, m.prev_06, m.prev_07, m.prev_08, m.prev_09, m.prev_10, m.prev_11, m.prev_12, m.cur_01, m.cur_02, m.cur_03, m.cur_04, m.cur_05, m.cur_06, m.cur_07, m.cur_08, m.cur_09, m.cur_10, m.cur_11, m.cur_12 FROM mv_users u LEFT JOIN mv_last_two_years_cashes m USING(id) WHERE u.resign IS NULL ORDER BY u.full_name');
 		while ($row = $result->fetchObject()) {
-			$id = str_repeat('0', 3 - strlen($row->id)) . $row->id;
+			$id = Utilities::pad_id($row->id);
 			$this->_content .= "
 					<tr>
 						<td class=\"text-center\">$id</td>
@@ -178,14 +179,14 @@ CONTENT;
 			}
 
 			$this->_content .= "
-						<td class=\"text-right text-nowrap\">" . number_format($row->paid) . "</td>
-						<td class=\"text-right text-nowrap\">" . ($row->months_of_debt ? sprintf(ngettext('%d Month', '%d Months', $row->months_of_debt), $row->months_of_debt) . ' / ' . number_format($row->debt) : '-') . "</td>
+						<td class=\"text-right text-nowrap\">" . number_format((float) $row->paid) . "</td>
+						<td class=\"text-right text-nowrap\">" . ($row->months_of_debt ? sprintf(ngettext('%d Month', '%d Months', $row->months_of_debt), $row->months_of_debt) . ' / ' . number_format((float) $row->debt) : '-') . "</td>
 						<td>
 							<select name=\"last_pay_period[$row->id]\" class=\"text-right\">";
 
 			foreach ($this->_select_period_options as $k => $v) {
 				if ((!$k && $row->last_pay_period) || ($k && ($k < $row->join || $k < $row->last_pay_period))) continue;
-				$this->_content .= "<option value=\"$k\"" . ($k == $post['last_pay_period'][$row->id] || $k == $row->last_pay_period ? ' selected' : '') . ">$v</option>";
+				$this->_content .= "<option value=\"$k\"" . ($k == ($post['last_pay_period'][$row->id] ?? '') || $k == $row->last_pay_period ? ' selected' : '') . ">$v</option>";
 			}
 
 			$this->_content .=
