@@ -2,10 +2,15 @@
 
 class Home extends Application {
 	function index($get, $post, $files) {
-		if (!$_SESSION['user_id']) {
+		if (empty($_SESSION['user_id'])) {
 			return $this->_form($get, $post, $files);
 		}
-		$user = $this->_db->query("SELECT * FROM mv_users WHERE id = {$_SESSION['user_id']}")->fetchObject();
+		$stmt = $this->_db->prepare('SELECT * FROM mv_users WHERE id = ?');
+		$stmt->execute([$_SESSION['user_id']]);
+		$user = $stmt->fetchObject();
+		if (!$user) {
+			return $this->_form($get, $post, $files);
+		}
 		$missing_datas = [];
 		empty($user->alias) && $missing_datas[] = _('Alias');
 		empty($user->pob) && $missing_datas[] = _('Place of Birth');
@@ -31,12 +36,12 @@ class Home extends Application {
 					<tr>
 						<td>' . ($this->_allowed_to_access_link('Monthly_Cashes') ? '<a href="' . Utilities::link_to('monthly-cashes') . '">' . _('Total Income') . '</a>' : _('Total Income')) . '</td>
 						<td>:</td>
-						<td>Rp. ' . number_format($cash->gross_amount) . '</td>
+						<td>Rp. ' . number_format((float) $cash->gross_amount) . '</td>
 					</tr>
 					<tr>
 						<td>' . ($this->_allowed_to_access_link('Expenses') ? '<a href="' . Utilities::link_to('expenses') . '">' . _('Total Expense') . '</a>' : _('Total Expense')) . '</td>
 						<td>:</td>
-						<td>Rp. ' . number_format($cash->expense) . '</td>
+						<td>Rp. ' . number_format((float) $cash->expense) . '</td>
 					</tr>
 					<tr>
 						<td>' . _('Total Income minus Total Expense') . '</td>
@@ -44,7 +49,7 @@ class Home extends Application {
 						<td>Rp. ' . number_format($cash->gross_amount - $cash->expense) . '</td>
 					</tr>';
 
-		if (password_verify('Sementara1', $user->password)) {
+		if (password_verify('Sementara1', rtrim((string) $user->hash))) {
 			$this->_content .= '
 					<tr>
 						<td colspan="3" class="blink">' . sprintf(_('Currently you still use standard password. For security purpose, please click %shere%s to change it'), '&nbsp;<a href="' . Utilities::link_to('sessions/mine/edit') . '">', '</a>&nbsp;') . '.</td>
@@ -56,8 +61,8 @@ class Home extends Application {
 						<td>' . sprintf(_('Your cash of %s status'), $period) . '</td>
 						<td>:</td>
 						<td>
-							<p>' . _('Paid') . ($user->last_pay_period ? ' ' . _('up to') . ' ' . $this->_period_formatter->format(new DateTime($user->last_pay_period . '01')) . ' /' : '') . ' Rp. ' . number_format($user->paid) . '</p>
-							<p' . ($user->months_of_debt ? ' class="blink"' : '') . '>' . sprintf(_('Debt %d Months'), $user->months_of_debt) . ' / Rp. ' . number_format($user->debt) . '</p>' .
+							<p>' . _('Paid') . ($user->last_pay_period ? ' ' . _('up to') . ' ' . $this->_format_period($user->last_pay_period) . ' /' : '') . ' Rp. ' . number_format((float) $user->paid) . '</p>
+							<p' . ($user->months_of_debt ? ' class="blink"' : '') . '>' . sprintf(_('Debt %d Months'), $user->months_of_debt) . ' / Rp. ' . number_format((float) $user->debt) . '</p>' .
 							($user->months_of_debt > 3 ? '<p class="blink">' . sprintf(_("You are getting a warning letter due to %d months late payment"), $user->months_of_debt) . '.<p>' : '') .
 						'</td>
 					</tr>';
@@ -85,21 +90,23 @@ class Home extends Application {
 
 	function search($get, $post, $files) {
 		$this->_form($get, $post, $files);
-		if (!preg_match('/^\d{3}$/', $get['id'])) {
+		$id = (string) ($get['id'] ?? '');
+		if (!preg_match('/^\d{3}$/', $id)) {
 			$this->_content .= '<div class="alert alert-warning">' . _('Please fill the search form above with 3 digits of ID number printed on ID card') . '.</div>';
 			return;
 		}
-		$result = $this->_db->query("SELECT id, full_name, resign FROM mv_users WHERE id = {$get['id']}");
-		if (!$result->rowCount()) {
-			$this->_content .= '<div class="alert alert-danger">' . sprintf(_('Medan Bisser member with ID %s is not found'), $get['id']) . '.</div>';
+		$stmt = $this->_db->prepare('SELECT id, full_name, resign FROM mv_users WHERE id = ?');
+		$stmt->execute([(int) $id]);
+		$user = $stmt->fetchObject();
+		if (!$user) {
+			$this->_content .= '<div class="alert alert-danger">' . sprintf(_('Medan Bisser member with ID %s is not found'), $id) . '.</div>';
 			return;
 		}
-		$user = $result->fetchObject();
-		$resign = $user->resign ? $this->_period_formatter->format(new DateTime($user->resign . '01')) : null;
-		$this->_content .= '<div class="alert alert-success">' . sprintf(_('Medan Bisser member with ID %s is found, the detail is as follow'), $get['id']) . ' :</div>
+		$resign = $this->_format_period($user->resign);
+		$this->_content .= '<div class="alert alert-success">' . sprintf(_('Medan Bisser member with ID %s is found, the detail is as follow'), $id) . ' :</div>
 		<table class="table">
 			<tr>
-				<td rowspan="2"><img src="/images/photos/' . (file_exists("images/photos/{$get['id']}-md.jpg") ? $get['id'] : 'anonymous') . '-md.jpg"></td>
+				<td rowspan="2"><img src="/images/photos/' . (file_exists("images/photos/{$id}-md.jpg") ? $id : 'anonymous') . '-md.jpg"></td>
 				<td>' . _('Name') . '</td>
 				<td>:</td>
 				<td>' . $user->full_name . '</td>
@@ -107,7 +114,7 @@ class Home extends Application {
 			<tr>
 				<td>' . _('Membership Status') . '</td>
 				<td>:</td>
-				<td>' . ($resign ? '<i class="fa fa-close">&nbsp;</i> ' . sprintf(_("Resign as of %s. All of his activities are completely out of Medan Bisser's responsibility"), (new DateTime($resign))->format('F Y')) : '<i class="fa fa-check-circle">&nbsp;</i> ' . _('is active')) . '.</td>
+				<td>' . ($resign ? '<i class="fa fa-close">&nbsp;</i> ' . sprintf(_("Resign as of %s. All of his activities are completely out of Medan Bisser's responsibility"), $resign) : '<i class="fa fa-check-circle">&nbsp;</i> ' . _('is active')) . '.</td>
 			</tr>
 		</table>';
 		!$resign && $this->_content .= '<p>' . _("If you have complaint regarding our activities, please don't hesitate to let us know by sending email to info@medanbisser.com, thank you") . '</p>';
@@ -134,7 +141,7 @@ class Home extends Application {
 		<form action="' . Utilities::link_to('search') . '" method="GET" role="form" class="form-inline">
 			<div class="form-group">
 				<label class="sr-only" for="id">' . _('ID number') . '</label>
-				<input type="text" class="form-control" name="id" id="id" value="' . $get['id'] . '" placeholder="' . _('ID Number') . '">
+				<input type="text" class="form-control" name="id" id="id" value="' . htmlspecialchars((string) ($get['id'] ?? '')) . '" placeholder="' . _('ID Number') . '">
 			</div>
 			<button type="submit" class="btn btn-default"><i class="fa fa-search">&nbsp;</i> ' . _('Search') . '</button>
 		</form>';

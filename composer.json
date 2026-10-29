@@ -1,0 +1,20 @@
+{
+    "name": "roysitumorang/medanbisser",
+    "description": "Medan Bisser membership ERP",
+    "type": "project",
+    "require": {
+        "php": ">=8.5",
+        "ext-ctype": "*",
+        "ext-exif": "*",
+        "ext-gd": "*",
+        "ext-gettext": "*",
+        "ext-iconv": "*",
+        "ext-intl": "*",
+        "ext-pdo": "*",
+        "ext-pdo_pgsql": "*",
+        "ext-session": "*"
+    },
+    "suggest": {
+        "ext-apcu": "Caches period/select lists between requests; the app falls back to computing them per request"
+    }
+}

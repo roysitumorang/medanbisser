@@ -3,24 +3,29 @@
 class Posts extends Application {
 	function __construct($db, $route) {
 		parent::__construct($db, $route);
-		!apcu_exists('posts_order_fields') && apcu_add('posts_order_fields', ['Tanggal' => 'id DESC']);
-		$this->_order_fields = apcu_fetch('posts_order_fields');
+		$this->_order_fields = $this->_cached('posts_order_fields', fn() => ['Tanggal' => 'id DESC']);
 	}
 
 	function index($get, $post, $files) {
 		parent::index($get, $post, $files);
 		$params = [];
-		$this->_query .= ' ' . ($_SESSION['user_id'] ? "JOIN mv_users u ON r.id = u.role_id WHERE u.id = {$_SESSION['user_id']}" : "WHERE r.name = 'Anonymous'") . ' AND p.id NOT IN(4, 5)';
+		if (!empty($_SESSION['user_id'])) {
+			$this->_query .= ' JOIN mv_users u ON r.id = u.role_id WHERE u.id = ?';
+			$params[] = $_SESSION['user_id'];
+		} else {
+			$this->_query .= " WHERE r.name = 'Anonymous'";
+		}
+		$this->_query .= ' AND p.id NOT IN(4, 5)';
 		if (!empty($get['q'])) {
 			$q = sprintf('%%%s%%', $get['q']);
-			$params = [$q, $q];
+			array_push($params, $q, $q);
 			$this->_query .= ' AND (p.title LIKE ? OR p.body LIKE ?)';
 		}
 		$this->_paginate($get, Utilities::link_to('posts'), $params, 'p.id, p.title, p.url_alias, c.full_name AS created_by, p.created_at, m.full_name AS modified_by, p.modified_at');
 		$this->_content .= '
 			<h2 class="navbar-form navbar-left"><i class="fa fa-list">&nbsp;</i> ' . ngettext('Post', 'Posts', 2) . '</h2>
 			<form method="GET" action="' . Utilities::link_to('posts') . '" class="navbar-form navbar-right" role="search" onsubmit="(\'' . _('Search') . '\'==$(\'[name=q\').val())&amp;&amp;$(\'[name=q]\').val(\'\')">
-				<input type="text" name="q" value="' . $get['q'] . '" class="form-control" placeholder="' . _('Search') . '">
+				<input type="text" name="q" value="' . htmlspecialchars($get['q'] ?? '') . '" class="form-control" placeholder="' . _('Search') . '">
 				<button type="submit" class="btn btn-default"><i class="fa fa-search">&nbsp;</i> ' . _('Search') . '</button>' .
 		($this->_allowed_to_access_link('Posts', 'new') ? '<a type="button" href="' . Utilities::link_to('posts/new') . '" class="btn btn-default"><i class="fa fa-user-plus">&nbsp;</i>&nbsp;' . _('New') . '</a>' : '') .
 			'</form>
@@ -42,7 +47,7 @@ class Posts extends Application {
 					<tr title='Dibuat oleh $row->created_by tanggal " . $this->_date_formatter->format(new DateTime($row->created_at)) . ($row->modified_by ? ", diupdate oleh $row->modified_by tanggal " . $this->_date_formatter->format(new DateTime($row->modified_at)) : '') . "'>
 						<td class=\"text-center\">" . $this->_date_formatter->format(new DateTime($row->created_at)) . "</td>
 						<td>$row->title</td>
-						<td class=\"text-center\">" . $this->_db->query("SELECT SUM(hits) FROM post_access_logs WHERE post_id = $row->id")->fetchColumn() . "</td>
+						<td class=\"text-center\">" . $this->_scalar('SELECT SUM(hits) FROM post_access_logs WHERE post_id = ?', [$row->id]) . "</td>
 						<td class=\"text-center\">
 							<a type=\"button\" href=\"" . Utilities::link_to($row->url_alias) . "\" class=\"btn btn-info\"><i class=\"fa fa-angle-double-right\">&nbsp;</i> " . _('Show') . "</a>
 						</td>
@@ -61,15 +66,15 @@ CONTENT;
 		if (!in_array($post->id, [4, 5])) {
 			$stmt = $this->_db->prepare('INSERT INTO post_access_logs (post_id, user_id, hits, created_by, created_ip, created_at) VALUES (:post_id, :user_id, 1, :by, :ip, :at) ON CONFLICT (post_id, user_id) DO UPDATE SET hits = post_access_logs.hits + 1, modified_by = :by, modified_ip = :ip, modified_at = :at');
 			$stmt->execute([
-				':by'      => $_SESSION['user_id'],
+				':by'      => $_SESSION['user_id'] ?? null,
 				':ip'      => Utilities::get_real_ip_address(),
 				':at'      => $this->_now->format('Y-m-d H:i:s'),
 				':post_id' => $post->id,
-				':user_id' => $_SESSION['user_id'],
+				':user_id' => $_SESSION['user_id'] ?? null,
 			]);
 		}
 		$menu = '';
-		if ($_SESSION['user_id']) {
+		if (!empty($_SESSION['user_id'])) {
 			$menu = "<div class=\"form-group\">" .
 					($this->_allowed_to_access_link('Posts', 'edit') ? "<a type=\"button\" href=\"" . Utilities::link_to("posts/$post->id/edit") . "\" class=\"btn btn-primary\"><i class=\"fa fa-edit\">&nbsp;</i>&nbsp;" . _('Edit') . "</a>" : '') .
 					"<a type=\"button\" href=\"" . Utilities::link_to('posts') . "\" class=\"btn btn-default\"><i class=\"fa fa-step-backward\">&nbsp;</i> " . _('Back') . "</a>
@@ -92,10 +97,11 @@ CONTENT;
 		$this->_validate($post, $files);
 		if (empty($this->_error_messages)) {
 			$post['slug'] = $this->_now->format('Y/m/d') . '/' . Utilities::slugify($post['title']);
+			$post['url_alias'] = ($post['alias'] ?? '') ?: null;
 			$id = parent::_db_insert('posts', $post);
 			parent::_db_insert('post_permissions', ['post_id' => $id, 'role_id' => '1']);
 			$this->_alert = ['type' => 'success', 'message' => _('Post successfully created')];
-			Utilities::redirect_to($post['alias'] ?: $post['slug']);
+			Utilities::redirect_to(($post['alias'] ?? '') ?: $post['slug']);
 		}
 		$this->_alert = ['type' => 'danger', 'message' => _('Record invalid')];
 		$this->_form($get, $post, Utilities::link_to('posts/create'));
@@ -106,6 +112,7 @@ CONTENT;
 		foreach ($content as $k => $v) {
 			!isset($post[$k]) && $post[$k] = $v;
 		}
+		$post['alias'] ??= $content->url_alias;
 		$this->_form($get, $post, Utilities::link_to("posts/$content->id/update"));
 	}
 
@@ -117,9 +124,10 @@ CONTENT;
 			$this->_form($get, $post, Utilities::link_to("posts/$content->id/update"));
 			return;
 		}
+		$post['url_alias'] = ($post['alias'] ?? '') ?: null;
 		parent::_db_update('posts', $post);
 		$this->_alert = ['type' => 'success', 'message' => _('Post successfully updated')];
-		Utilities::redirect_to($post['alias'] ?: $post['slug']);
+		Utilities::redirect_to(($post['alias'] ?? '') ?: ($content->url_alias ?: 'posts'));
 	}
 
 	private function _form($get, $post, $action) {
@@ -130,30 +138,30 @@ CONTENT;
 		'<form action="' . $action . '" method="POST" enctype="multipart/form-data" role="form">
 			<input type="hidden" name="id" value="' . $this->_param['id'] . '">
 			<div class="form-group">
-				<div class="col-sm' . ($this->_error_messages['title'] ? ' has-error error' : '') . '">
+				<div class="col-sm' . ($this->_err('title') ? ' has-error error' : '') . '">
 					<label for="title" class="control-label">* ' . _('Title') . '</label>
 				</div>
-				<div class="col-sm' . ($this->_error_messages['title'] ? ' has-error error' : '') . '">
-					<input type="text" class="form-control" id="title" name="title" placeholder="' . _('Title') . '" value="' . $post['title'] . '" size="140">
-					<span class="help-block' . ($this->_error_messages['title'] ? ' text-danger' : '') . '">' . $this->_error_messages['title'] . '</span>
+				<div class="col-sm' . ($this->_err('title') ? ' has-error error' : '') . '">
+					<input type="text" class="form-control" id="title" name="title" placeholder="' . _('Title') . '" value="' . ($post['title'] ?? '') . '" size="140">
+					<span class="help-block' . ($this->_err('title') ? ' text-danger' : '') . '">' . $this->_err('title') . '</span>
 				</div>
 			</div>
 			<div class="form-group">
-				<div class="col-sm' . ($this->_error_messages['alias'] ? ' has-error error' : '') . '">
+				<div class="col-sm' . ($this->_err('alias') ? ' has-error error' : '') . '">
 					<label for="alias" class="control-label">' . _('URL Alias') . '</label>
 				</div>
-				<div class="col-sm' . ($this->_error_messages['alias'] ? ' has-error error' : '') . '">
-					<input type="text" class="form-control" id="alias" name="alias" placeholder="' . _('URL Alias') . '" value="' . $post['alias'] . '" size="140">
-					<span class="help-block' . ($this->_error_messages['alias'] ? ' text-danger' : '') . '">' . $this->_error_messages['alias'] . '</span>
+				<div class="col-sm' . ($this->_err('alias') ? ' has-error error' : '') . '">
+					<input type="text" class="form-control" id="alias" name="alias" placeholder="' . _('URL Alias') . '" value="' . ($post['alias'] ?? '') . '" size="140">
+					<span class="help-block' . ($this->_err('alias') ? ' text-danger' : '') . '">' . $this->_err('alias') . '</span>
 				</div>
 			</div>
 			<div class="form-group">
-				<div class="col-sm' . ($this->_error_messages['body'] ? ' has-error error' : '') . '">
+				<div class="col-sm' . ($this->_err('body') ? ' has-error error' : '') . '">
 					<label for="content" class="control-label">* ' . _('Body') . '</label>
 				</div>
-				<div class="col-sm' . ($this->_error_messages['body'] ? ' has-error error' : '') . '">
-					<textarea id="content" name="body" class="form-control" placeholder="' . _('Body') . '">' . $post['body'] . '</textarea>
-					<span class="help-block' . ($this->_error_messages['body'] ? ' text-danger' : '') . '">' . $this->_error_messages['body'] . '</span>
+				<div class="col-sm' . ($this->_err('body') ? ' has-error error' : '') . '">
+					<textarea id="content" name="body" class="form-control" placeholder="' . _('Body') . '">' . ($post['body'] ?? '') . '</textarea>
+					<span class="help-block' . ($this->_err('body') ? ' text-danger' : '') . '">' . $this->_err('body') . '</span>
 				</div>
 			</div>
 			<div class="form-group">
@@ -170,7 +178,7 @@ CONTENT;
 		foreach (['title', 'body'] as $item) {
 			empty($post[$item]) && $this->_error_messages[$item] = _('is blank');
 		}
-		$post['alias'] && $this->_db->query("SELECT COUNT(1) FROM posts WHERE alias = '{$post['alias']}'" . ($this->_param['id'] ? " AND id <> {$this->_param['id']}" : ''))->fetchColumn() && $this->_error_messages['alias'] = _('is taken');
+		!empty($post['alias']) && !$this->_unique('posts', 'url_alias', $post['alias']) && $this->_error_messages['alias'] = _('is taken');
 		$this->_error_messages && $this->_alert = ['type' => 'danger', 'message' => _('Record invalid')];
 	}
 
@@ -186,12 +194,14 @@ CONTENT;
 		} else if ($this->_param['id']) {
 			$query .= 'id = ?';
 			$param[] = $this->_param['id'];
+		} else {
+			Utilities::redirect_to(404);
 		}
 		$stmt = $this->_db->prepare($query);
 		$stmt->execute($param);
 		$post = $stmt->fetchObject();
 		$post || Utilities::redirect_to(404);
-		$this->_db->query("SELECT COUNT(1) FROM post_permissions p JOIN roles r ON p.role_id = r.id WHERE r.name = '" . ROLE . "' AND p.post_id = $post->id")->fetchColumn() || Utilities::redirect_to(403);
+		$this->_scalar('SELECT COUNT(1) FROM post_permissions p JOIN roles r ON p.role_id = r.id WHERE r.name = ? AND p.post_id = ?', [ROLE, $post->id]) || Utilities::redirect_to(403);
 		return $post;
 	}
 }
